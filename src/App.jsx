@@ -16,7 +16,7 @@ const VAGAS = {
 1. Visão estratégica de CS: entende o papel como gestão de resultado (retenção, expansão, saúde da carteira) — não reduz a atendimento ou suporte.
 2. Raciocínio analítico com ação: usa dados reais (churn, NPS, health score, MRR) pra identificar problemas e agir antes de virar crise — não apenas reporta.
 3. Negociação e autonomia: conduz conversas difíceis com clientes (renovação, realinhamento, conflito), toma decisão e chega em solução — não escala tudo pro gestor.
-4. Clareza e síntese: responde de forma direta, objetiva e bem articulada dentro do limite de 2 minutos — quem enrola ou é vago perde pontos.
+4. Clareza e síntese: responde de forma direta, objetiva e bem articulada dentro do limite de 5 minutos — quem enrola ou é vago perde pontos.
 5. Experiência B2B SaaS: demonstra vivência real com gestão de carteira em empresas B2B, preferencialmente SaaS.`
   },
   'cs-b2b': {
@@ -32,12 +32,12 @@ const VAGAS = {
 1. Postura com C-level: tem presença, confiança e maturidade pra lidar com diretores e executivos — se posiciona como parceiro estratégico, não como operacional.
 2. Organização e resiliência sob pressão: gerencia múltiplas contas grandes simultaneamente sem perder prazo, contexto ou qualidade — descreve processo e critério de priorização, não apenas "trabalhei mais".
 3. Retenção por relacionamento: segura contas por confiança, valor e ação estratégica — não por desconto ou concessão.
-4. Clareza e síntese: responde de forma direta, objetiva e bem articulada dentro do limite de 2 minutos — quem enrola ou é vago perde pontos.
+4. Clareza e síntese: responde de forma direta, objetiva e bem articulada dentro do limite de 5 minutos — quem enrola ou é vago perde pontos.
 5. Experiência com contas enterprise: demonstra vivência real com clientes de alto ticket e ciclos de relacionamento longos.`
   }
 }
 
-const TEMPO_LIMITE = 120
+const TEMPO_LIMITE = 300
 const SENHA_PAINEL = "@Waid2626"
 
 function gerarId() {
@@ -109,6 +109,7 @@ const S = {
   badge: { display: 'inline-block', background: '#ede9fe', color: '#7c3aed', borderRadius: '99px', padding: '4px 12px', fontSize: '12px', fontWeight: '600', margin: '0 0 16px' },
   row: { display: 'flex', gap: '12px', marginTop: '16px', alignItems: 'center' },
   aviso: { background: '#f0fdf4', borderRadius: '12px', padding: '16px 20px', marginBottom: '24px', borderLeft: '4px solid #16a34a' },
+  avisoAmarelo: { background: '#fffbeb', borderRadius: '12px', padding: '14px 18px', marginBottom: '24px', borderLeft: '4px solid #f59e0b' },
   timer: (d) => ({ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '10px', background: d ? '#fef2f2' : '#f8fafc', border: `2px solid ${d ? '#dc2626' : '#e2e8f0'}`, marginBottom: '16px', fontSize: '20px', fontWeight: '700', color: d ? '#dc2626' : '#1e293b', fontVariantNumeric: 'tabular-nums' }),
   audio: { width: '100%', borderRadius: '8px', marginTop: '12px' },
   sc: (n) => ({ display: 'inline-block', background: n >= 70 ? '#dcfce7' : n >= 50 ? '#fef9c3' : '#fee2e2', color: n >= 70 ? '#16a34a' : n >= 50 ? '#ca8a04' : '#dc2626', borderRadius: '99px', padding: '4px 14px', fontSize: '13px', fontWeight: '700' })
@@ -236,8 +237,13 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       </div>
       <div style={S.aviso}>
         <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#15803d', lineHeight: '1.7' }}>Olá! Essa é uma etapa do nosso processo seletivo feita por áudio.</p>
-        <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#15803d', lineHeight: '1.7' }}>Você vai responder <strong>{config.perguntas.length} perguntas</strong> gravando sua voz. Cada resposta tem um limite de <strong>2 minutos</strong>. Nosso time vai ouvir suas respostas diretamente.</p>
+        <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#15803d', lineHeight: '1.7' }}>Você vai responder <strong>{config.perguntas.length} perguntas</strong> gravando sua voz. Cada resposta tem um limite de <strong>5 minutos</strong>. Nosso time vai ouvir suas respostas diretamente.</p>
         <p style={{ margin: 0, fontSize: '14px', color: '#15803d', lineHeight: '1.7' }}>Responda com naturalidade, como se estivesse em uma conversa. Seja direto(a) e objetivo(a). 🙌</p>
+      </div>
+      <div style={S.avisoAmarelo}>
+        <p style={{ margin: 0, fontSize: '13px', color: '#92400e', lineHeight: '1.6' }}>
+          ⚠️ <strong>Sobre a transcrição automática:</strong> o sistema pode não capturar todas as palavras corretamente — e tudo bem! O time de Gente & Cultura vai <strong>ouvir os áudios</strong> diretamente. Fale com tranquilidade. 🎧
+        </p>
       </div>
       <p style={{ color: '#475569', marginBottom: '24px', lineHeight: '1.6', fontSize: '14px' }}>Use <strong>Google Chrome</strong> no computador para melhor experiência. Certifique-se de estar em um ambiente silencioso.</p>
       <input style={S.inp} placeholder="Seu nome completo" value={nome} onChange={e => setNome(e.target.value)} onKeyDown={e => e.key === 'Enter' && nome.trim() && setIniciado(true)} />
