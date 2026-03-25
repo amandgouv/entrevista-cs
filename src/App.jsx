@@ -129,6 +129,8 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
   const [transcricao, setTranscricao] = useState("")
   const [enviando, setEnviando] = useState(false)
   const [concluido, setConcluido] = useState(false)
+  const [revisando, setRevisando] = useState(false)
+  const [reviewUrls, setReviewUrls] = useState([])
   const mediaRecRef = useRef(null)
   const chunksRef = useRef([])
   const speechRef = useRef(null)
@@ -148,6 +150,10 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
   }, [])
 
   useEffect(() => { return () => { pararGravacao() } }, [pararGravacao])
+
+  useEffect(() => {
+    return () => { reviewUrls.forEach(u => { try { URL.revokeObjectURL(u) } catch {} }) }
+  }, [reviewUrls])
 
   const iniciarGravacao = async () => {
     limparEstado()
@@ -187,12 +193,74 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
 
   const regravar = () => { limparEstado() }
 
+  // Salva resposta atual no array por índice (upsert)
+  const salvarRespostaAtual = (blob, transcrAtual, tempoAtual, arr) => {
+    const novas = [...arr]
+    novas[pergAtual] = { blob, transcricao: transcrAtual, duracao: TEMPO_LIMITE - tempoAtual }
+    return novas
+  }
+
   const avancar = () => {
     if (!audioBlob) return
-    const nova = { blob: audioBlob, transcricao: transcricaoRef.current || transcricao, duracao: TEMPO_LIMITE - tempoRestante }
-    const novas = [...respostas, nova]; setRespostas(novas); limparEstado()
-    if (pergAtual + 1 < config.perguntas.length) { setPergAtual(pergAtual + 1) }
-    else { finalizarEnvio(novas) }
+    const novas = salvarRespostaAtual(audioBlob, transcricaoRef.current || transcricao, tempoRestante, respostas)
+    setRespostas(novas)
+
+    if (pergAtual + 1 < config.perguntas.length) {
+      limparEstado()
+      setPergAtual(pergAtual + 1)
+    } else {
+      // Entrar na tela de revisão
+      if (audioUrl) URL.revokeObjectURL(audioUrl)
+      setAudioBlob(null); setAudioUrl(null); setTranscricao(""); transcricaoRef.current = ""
+      const urls = novas.map(r => URL.createObjectURL(r.blob))
+      setReviewUrls(urls)
+      setRevisando(true)
+    }
+  }
+
+  const voltar = () => {
+    if (gravando) pararGravacao()
+
+    // Salva resposta atual se houver áudio
+    let novas = respostas
+    if (audioBlob) {
+      novas = salvarRespostaAtual(audioBlob, transcricaoRef.current || transcricao, tempoRestante, respostas)
+      setRespostas(novas)
+    }
+
+    // Revoga URL atual
+    if (audioUrl) URL.revokeObjectURL(audioUrl)
+
+    // Restaura resposta anterior
+    const prev = novas[pergAtual - 1]
+    if (prev) {
+      setAudioBlob(prev.blob)
+      setAudioUrl(URL.createObjectURL(prev.blob))
+      setTranscricao(prev.transcricao)
+      transcricaoRef.current = prev.transcricao
+      setTempoRestante(TEMPO_LIMITE - prev.duracao)
+    } else {
+      setAudioBlob(null); setAudioUrl(null); setTranscricao(""); transcricaoRef.current = ""; setTempoRestante(TEMPO_LIMITE)
+    }
+
+    setPergAtual(pergAtual - 1)
+  }
+
+  const voltarDaRevisao = () => {
+    reviewUrls.forEach(u => { try { URL.revokeObjectURL(u) } catch {} })
+    setReviewUrls([])
+    setRevisando(false)
+
+    // Restaura última pergunta com seu áudio
+    const ultima = respostas[respostas.length - 1]
+    if (ultima) {
+      setAudioBlob(ultima.blob)
+      setAudioUrl(URL.createObjectURL(ultima.blob))
+      setTranscricao(ultima.transcricao)
+      transcricaoRef.current = ultima.transcricao
+      setTempoRestante(TEMPO_LIMITE - ultima.duracao)
+    }
+    setPergAtual(config.perguntas.length - 1)
   }
 
   const finalizarEnvio = async (todas) => {
@@ -221,6 +289,7 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       <p style={{ color: '#64748b', marginTop: '8px' }}>Obrigado, {nome}! Nossa equipe vai ouvir suas respostas e entrará em contato em breve.</p>
     </div></div>
   )
+
   if (enviando) return (
     <div style={S.page}><div style={{ ...S.box, textAlign: 'center' }}>
       <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
@@ -228,6 +297,36 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       <p style={{ color: '#64748b', marginTop: '8px' }}>Estamos salvando seus áudios e analisando suas respostas. Não feche a página.</p>
     </div></div>
   )
+
+  // Tela de revisão
+  if (revisando) return (
+    <div style={S.page}><div style={S.box}>
+      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ fontSize: '40px', marginBottom: '8px' }}>🎧</div>
+        <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a', margin: '0 0 6px' }}>Revise suas respostas</h2>
+        <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Ouça antes de enviar. Se quiser regravar, use o botão voltar.</p>
+      </div>
+      {respostas.map((r, i) => (
+        <div key={i} style={{ background: '#f8fafc', borderRadius: '12px', padding: '16px', marginBottom: '16px', borderLeft: '4px solid #7c3aed' }}>
+          <p style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: '700', color: '#7c3aed' }}>Pergunta {i + 1}</p>
+          <p style={{ margin: '0 0 12px', fontSize: '14px', color: '#1e293b', lineHeight: '1.5' }}>{config.perguntas[i]}</p>
+          <audio controls src={reviewUrls[i]} style={{ width: '100%', borderRadius: '8px' }} />
+          <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#7c3aed' }}>⏱ Duração: {formatarTempo(r.duracao)}</p>
+          {r.transcricao && (
+            <details style={{ marginTop: '8px' }}>
+              <summary style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>Ver transcrição automática</summary>
+              <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>{r.transcricao}</p>
+            </details>
+          )}
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+        <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569', flex: 1, padding: '14px' }} onClick={voltarDaRevisao}>← Voltar</button>
+        <button style={{ ...S.btn, marginTop: 0, flex: 2 }} onClick={() => finalizarEnvio(respostas)}>Enviar entrevista ✓</button>
+      </div>
+    </div></div>
+  )
+
   if (!iniciado) return (
     <div style={S.page}><div style={S.box}>
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -252,6 +351,8 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
   )
 
   const temAudio = !!audioBlob, danger = gravando && tempoRestante <= 30
+  const isUltima = pergAtual + 1 === config.perguntas.length
+
   return (
     <div style={S.page}><div style={S.box}>
       <span style={S.badge}>Pergunta {pergAtual + 1} de {config.perguntas.length}</span>
@@ -276,11 +377,21 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
         </div>
       )}
       <div style={S.row}>
-        {!gravando && !temAudio && <button style={{ ...S.btn, marginTop: 0, background: '#7c3aed' }} onClick={iniciarGravacao}>🎙 Gravar resposta</button>}
-        {gravando && <button style={{ ...S.btnSm, background: '#dc2626', color: 'white', flex: 1 }} onClick={pararGravacao}>⏹ Parar gravação</button>}
+        {/* Botão voltar — só aparece quando não está gravando e há pergunta anterior */}
+        {!gravando && pergAtual > 0 && (
+          <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569' }} onClick={voltar}>← Voltar</button>
+        )}
+        {!gravando && !temAudio && (
+          <button style={{ ...S.btn, marginTop: 0, flex: 1 }} onClick={iniciarGravacao}>🎙 Gravar resposta</button>
+        )}
+        {gravando && (
+          <button style={{ ...S.btnSm, background: '#dc2626', color: 'white', flex: 1 }} onClick={pararGravacao}>⏹ Parar gravação</button>
+        )}
         {temAudio && !gravando && (<>
           <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569' }} onClick={regravar}>🔄 Regravar</button>
-          <button style={{ ...S.btn, marginTop: 0, flex: 1 }} onClick={avancar}>{pergAtual + 1 < config.perguntas.length ? 'Próxima →' : 'Enviar ✓'}</button>
+          <button style={{ ...S.btn, marginTop: 0, flex: 1 }} onClick={avancar}>
+            {isUltima ? 'Revisar respostas →' : 'Próxima →'}
+          </button>
         </>)}
       </div>
     </div><style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.3 } }`}</style></div>
