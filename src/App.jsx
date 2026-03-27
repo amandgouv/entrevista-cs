@@ -61,11 +61,15 @@ async function avaliarRespostas(apiKey, nome, vaga, respostas) {
   const prompt = `Você é um recrutador especialista da Curseduca, uma EdTech brasileira em crescimento.
 Avalie as respostas (transcritas de áudio) do candidato "${nome}" para a vaga de ${config.titulo}.
 
-${respostas.map((r, i) => `Pergunta ${i + 1}: ${config.perguntas[i]}\nResposta (transcrição do áudio): ${r.transcricao && r.transcricao.trim().length > 10 ? r.transcricao : '[transcrição não disponível — avalie pelo áudio]'}\n`).join('\n')}
+${respostas.map((r, i) => `Pergunta ${i + 1}: ${config.perguntas[i]}\nResposta (transcrição do áudio): ${r.transcricao && r.transcricao.trim().length > 10 ? r.transcricao : '[transcrição não capturada]'}\n`).join('\n')}
 
 ${config.criterios}
 
-IMPORTANTE: As respostas foram transcritas automaticamente de áudio, então pode haver pequenos erros de transcrição. Avalie o conteúdo e a qualidade do raciocínio, não a gramática da transcrição. Se alguma transcrição estiver ausente, ignore essa pergunta na pontuação e indique nos alertas que o áudio deve ser ouvido manualmente.
+INSTRUÇÕES IMPORTANTES:
+- As transcrições são geradas automaticamente e podem ter erros de pontuação, palavras trocadas ou frases incompletas. Seja tolerante com esses problemas e foque no conteúdo e raciocínio, não na forma.
+- Se uma transcrição estiver marcada como '[transcrição não capturada]', não penalize o candidato por isso — registre nos alertas que o áudio deve ser ouvido manualmente para essa pergunta.
+- Avalie com base no que foi dito, mesmo que a transcrição seja imperfeita. Uma resposta com boa substância mas transcrição truncada ainda deve receber nota justa.
+- Só classifique como ❌ Não avança se houver evidência clara de inadequação no conteúdo — não por ausência de transcrição.
 
 Responda APENAS em JSON válido:
 {"score":<0-100>,"classificacao":"<✅ Avança | 🟡 Talvez | ❌ Não avança>","pontos_fortes":["..."],"alertas":["..."],"resumo":"<2 frases>"}`
@@ -258,11 +262,17 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
         nome, candidatoId, vaga: vagaId, respostas: resSemAudio, avaliacao: aval,
         data: new Date().toLocaleDateString("pt-BR"), timestamp: new Date()
       })
+      const errosAudio = []
       for (let i = 0; i < todas.length; i++) {
         try {
           const b64 = await blobToBase64(todas[i].blob)
           await setDoc(doc(db, config.colecao, docRef.id, "audios", `pergunta-${i}`), { pergunta: i, audioBase64: b64, duracao: todas[i].duracao })
-        } catch {}
+        } catch (e) {
+          errosAudio.push(i + 1)
+        }
+      }
+      if (errosAudio.length > 0) {
+        await setDoc(doc(db, config.colecao, docRef.id), { errosAudio }, { merge: true })
       }
       setConcluido(true); onFinalizar()
     } catch (err) { alert("Erro ao enviar: " + err.message); setEnviando(false) }
@@ -512,7 +522,7 @@ function Painel({ onVoltar }) {
                 {x.respostas?.map((r, j) => (
                   <div key={j} style={{ marginTop: '12px', background: '#f8fafc', borderRadius: '8px', padding: '16px' }}>
                     <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>P{j + 1}: {vc.perguntas[j] || 'Pergunta não disponível'}</p>
-                    {aud[j] && <div style={{ marginBottom: '8px' }} onClick={e => e.stopPropagation()}><audio controls src={aud[j]} style={{ width: '100%', height: '36px' }} /></div>}
+                    {aud[j] ? <div style={{ marginBottom: '8px' }} onClick={e => e.stopPropagation()}><audio controls src={aud[j]} style={{ width: '100%', height: '36px' }} /></div> : x.errosAudio?.includes(j + 1) ? <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#dc2626' }}>⚠️ Áudio não salvo — erro no envio</p> : carregandoAudio !== x.id ? <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#94a3b8' }}>Áudio não disponível</p> : null}
                     {r.duracao != null && <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#7c3aed' }}>⏱ Duração: {formatarTempo(r.duracao)}</p>}
                     {r.transcricao && (<details onClick={e => e.stopPropagation()}><summary style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>Ver transcrição</summary><p style={{ margin: '6px 0 0', fontSize: '13px', color: '#1e293b', lineHeight: '1.5' }}>{r.transcricao}</p></details>)}
                     {r.texto && !r.transcricao && <p style={{ margin: 0, fontSize: '13px', color: '#1e293b', lineHeight: '1.5' }}>{r.texto}</p>}
