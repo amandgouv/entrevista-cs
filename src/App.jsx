@@ -3,37 +3,22 @@ import { db } from './firebase'
 import { collection, addDoc, getDocs, orderBy, query, doc, deleteDoc, setDoc } from 'firebase/firestore'
 
 const VAGAS = {
-  'cs-senior': {
-    titulo: 'Customer Success Manager — Pleno/Sênior',
-    subtitulo: 'Gestão de carteira estratégica com foco em retenção e expansão',
-    colecao: 'candidatos-cs-senior',
+  'csm-senior': {
+    titulo: 'Customer Success Manager Sênior',
+    subtitulo: 'Gestão estratégica de contas B2B com foco em resultado e expansão',
+    colecao: 'candidatos-csm-senior',
     perguntas: [
-      "Me explica, de forma direta, o que um CS faz no dia a dia — sem falar em atendimento ou suporte.",
-      "Me conta uma situação em que você olhou pros dados da sua carteira, identificou um problema antes de virar crise e agiu. O que você viu, o que fez e qual foi o resultado?",
-      "Me dá um exemplo de uma conversa difícil com um cliente — pode ser renovação, realinhamento de expectativa ou uma situação de conflito. Como você conduziu?"
+      "Me conta um caso em que você conectou o uso do produto com um resultado real de negócio do cliente. O que você mediu e como apresentou isso pra ele?",
+      "Me descreve uma situação em que você identificou que um cliente ia embora antes de ele mesmo falar isso. O que você viu, o que fez e como terminou?",
+      "Me conta um caso em que você identificou uma oportunidade de expansão a partir de um gap de resultado do cliente — não de uma meta de upsell. Como foi essa conversa?",
+      "Me conta uma situação em que você precisou dizer a alguém — cliente, liderança ou parceiro — que a estratégia que estava sendo seguida não ia funcionar. Como você conduziu essa conversa?"
     ],
     criterios: `Critérios de avaliação:
-1. Visão estratégica de CS: entende o papel como gestão de resultado (retenção, expansão, saúde da carteira) — não reduz a atendimento ou suporte.
-2. Raciocínio analítico com ação: usa dados reais (churn, NPS, health score, MRR) pra identificar problemas e agir antes de virar crise — não apenas reporta.
-3. Negociação e autonomia: conduz conversas difíceis com clientes (renovação, realinhamento, conflito), toma decisão e chega em solução — não escala tudo pro gestor.
-4. Clareza e síntese: responde de forma direta, objetiva e bem articulada dentro do limite de 5 minutos — quem enrola ou é vago perde pontos.
-5. Experiência B2B SaaS: demonstra vivência real com gestão de carteira em empresas B2B, preferencialmente SaaS.`
-  },
-  'cs-b2b': {
-    titulo: 'Customer Success B2B — Key Account',
-    subtitulo: 'Gestão de contas grandes com relacionamento C-level',
-    colecao: 'candidatos-cs-b2b',
-    perguntas: [
-      "Me conta como você construiu relacionamento com um cliente de alto nível — diretor ou C-level. Como você gerou confiança e se posicionou como parceiro estratégico, não só como ponto de contato?",
-      "Me descreve um momento em que você estava com várias contas grandes demandando ao mesmo tempo e a pressão aumentou. Como você priorizou, o que fez pra não deixar bola cair e como lidou com a pressão?",
-      "Me conta um caso em que um cliente grande estava insatisfeito ou próximo de sair. O que você fez pra reverter a situação e manter a conta?"
-    ],
-    criterios: `Critérios de avaliação:
-1. Postura com C-level: tem presença, confiança e maturidade pra lidar com diretores e executivos — se posiciona como parceiro estratégico, não como operacional.
-2. Organização e resiliência sob pressão: gerencia múltiplas contas grandes simultaneamente sem perder prazo, contexto ou qualidade — descreve processo e critério de priorização, não apenas "trabalhei mais".
-3. Retenção por relacionamento: segura contas por confiança, valor e ação estratégica — não por desconto ou concessão.
-4. Clareza e síntese: responde de forma direta, objetiva e bem articulada dentro do limite de 5 minutos — quem enrola ou é vago perde pontos.
-5. Experiência com contas enterprise: demonstra vivência real com clientes de alto ticket e ciclos de relacionamento longos.`
+1. Orientação ao resultado de negócio: conecta o uso do produto com métricas reais do cliente (receita, conversão, churn, ROI) — não fala só em adoção, NPS ou satisfação.
+2. Proatividade e detecção de risco: identifica sinais de churn por dados ou comportamento antes do cliente verbalizar — age antes de virar crise.
+3. Expansão consultiva: identifica oportunidades de expansão a partir de gaps reais de resultado — não a partir de metas de upsell ou pressão comercial.
+4. Postura consultiva e desafio com respeito: tem segurança pra dizer que uma estratégia não vai funcionar e conduz essa conversa com dados e alternativa — não concorda pra evitar conflito.
+5. Clareza e síntese: responde de forma direta, objetiva e bem articulada dentro do limite de 5 minutos — quem enrola ou é vago perde pontos.`
   }
 }
 
@@ -193,7 +178,6 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
 
   const regravar = () => { limparEstado() }
 
-  // Salva resposta atual no array por índice (upsert)
   const salvarRespostaAtual = (blob, transcrAtual, tempoAtual, arr) => {
     const novas = [...arr]
     novas[pergAtual] = { blob, transcricao: transcrAtual, duracao: TEMPO_LIMITE - tempoAtual }
@@ -209,7 +193,6 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       limparEstado()
       setPergAtual(pergAtual + 1)
     } else {
-      // Entrar na tela de revisão
       if (audioUrl) URL.revokeObjectURL(audioUrl)
       setAudioBlob(null); setAudioUrl(null); setTranscricao(""); transcricaoRef.current = ""
       const urls = novas.map(r => URL.createObjectURL(r.blob))
@@ -220,18 +203,12 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
 
   const voltar = () => {
     if (gravando) pararGravacao()
-
-    // Salva resposta atual se houver áudio
     let novas = respostas
     if (audioBlob) {
       novas = salvarRespostaAtual(audioBlob, transcricaoRef.current || transcricao, tempoRestante, respostas)
       setRespostas(novas)
     }
-
-    // Revoga URL atual
     if (audioUrl) URL.revokeObjectURL(audioUrl)
-
-    // Restaura resposta anterior
     const prev = novas[pergAtual - 1]
     if (prev) {
       setAudioBlob(prev.blob)
@@ -242,7 +219,6 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
     } else {
       setAudioBlob(null); setAudioUrl(null); setTranscricao(""); transcricaoRef.current = ""; setTempoRestante(TEMPO_LIMITE)
     }
-
     setPergAtual(pergAtual - 1)
   }
 
@@ -250,8 +226,6 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
     reviewUrls.forEach(u => { try { URL.revokeObjectURL(u) } catch {} })
     setReviewUrls([])
     setRevisando(false)
-
-    // Restaura última pergunta com seu áudio
     const ultima = respostas[respostas.length - 1]
     if (ultima) {
       setAudioBlob(ultima.blob)
@@ -298,7 +272,6 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
     </div></div>
   )
 
-  // Tela de revisão
   if (revisando) return (
     <div style={S.page}><div style={S.box}>
       <div style={{ textAlign: 'center', marginBottom: '28px' }}>
@@ -377,7 +350,6 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
         </div>
       )}
       <div style={S.row}>
-        {/* Botão voltar — só aparece quando não está gravando e há pergunta anterior */}
         {!gravando && pergAtual > 0 && (
           <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569' }} onClick={voltar}>← Voltar</button>
         )}
@@ -405,7 +377,6 @@ function Painel({ onVoltar }) {
   const [exp, setExp] = useState(null)
   const [audiosCarregados, setAudiosCarregados] = useState({})
   const [carregandoAudio, setCarregandoAudio] = useState(null)
-  const [filtroVaga, setFiltroVaga] = useState("todos")
   const [filtroStatus, setFiltroStatus] = useState("todos")
   const [carregando, setCarregando] = useState(false)
 
@@ -457,7 +428,7 @@ function Painel({ onVoltar }) {
     btn: { background: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
     out: { background: 'white', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
     inp: { width: '100%', padding: '12px 16px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '16px', boxSizing: 'border-box', outline: 'none', marginBottom: '16px' },
-    vb: (v) => ({ display: 'inline-block', background: v === 'cs-senior' ? '#ede9fe' : '#e0f2fe', color: v === 'cs-senior' ? '#7c3aed' : '#0369a1', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' })
+    vb: { display: 'inline-block', background: '#ede9fe', color: '#7c3aed', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }
   }
 
   if (!auth) return (
@@ -473,7 +444,6 @@ function Painel({ onVoltar }) {
   )
 
   let lista = candidatos
-  if (filtroVaga !== "todos") lista = lista.filter(x => x.vaga === filtroVaga)
   if (filtroStatus !== "todos") lista = lista.filter(x => x.avaliacao?.classificacao?.includes(filtroStatus === "avanca" ? "Avança" : filtroStatus === "talvez" ? "Talvez" : "Não avança"))
 
   return (
@@ -481,18 +451,12 @@ function Painel({ onVoltar }) {
       <div style={{ maxWidth: '900px', margin: '0 auto 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>Painel G&C — Entrevistas por Áudio</h1>
-          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{candidatos.length} candidato(s)</p>
+          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{candidatos.length} candidato(s) • CSM Sênior</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button style={sP.btn} onClick={carregarCandidatos} disabled={carregando}>{carregando ? "Carregando..." : "🔄 Atualizar"}</button>
           <button style={sP.out} onClick={onVoltar}>← Voltar</button>
         </div>
-      </div>
-      <div style={{ maxWidth: '900px', margin: '0 auto 16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '13px', color: '#64748b', alignSelf: 'center', marginRight: '4px' }}>Vaga:</span>
-        {[["todos", "Todas"], ["cs-senior", "CS Sênior"], ["cs-b2b", "CS B2B"]].map(([v, l]) => (
-          <button key={v} onClick={() => setFiltroVaga(v)} style={{ ...sP.btn, background: filtroVaga === v ? '#7c3aed' : 'white', color: filtroVaga === v ? 'white' : '#475569', border: '1px solid #e2e8f0', padding: '6px 14px', fontSize: '13px' }}>{l}</button>
-        ))}
       </div>
       <div style={{ maxWidth: '900px', margin: '0 auto 24px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <span style={{ fontSize: '13px', color: '#64748b', alignSelf: 'center', marginRight: '4px' }}>Status:</span>
@@ -502,14 +466,14 @@ function Painel({ onVoltar }) {
       </div>
       {lista.length === 0 && <div style={{ ...sP.card, textAlign: 'center', color: '#64748b', padding: '40px' }}>Nenhum candidato ainda.</div>}
       {lista.map((x, i) => {
-        const vc = VAGAS[x.vaga] || VAGAS['cs-senior']
+        const vc = VAGAS[x.vaga] || VAGAS['csm-senior']
         const aud = audiosCarregados[x.id] || {}
         return (
           <div key={x.id} style={sP.card} onClick={() => expandir(i, x)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: '16px' }}>{x.nome}</strong>
-                <span style={sP.vb(x.vaga)}>{x.vaga === 'cs-b2b' ? 'CS B2B' : 'CS Sênior'}</span>
+                <span style={sP.vb}>CSM Sênior</span>
                 <span style={{ color: '#94a3b8', fontSize: '13px' }}>{x.data}</span>
               </div>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -553,37 +517,13 @@ function Painel({ onVoltar }) {
 
 export default function App() {
   const [tela, setTela] = useState("candidato")
-  const [vagaId, setVagaId] = useState(null)
   const apiKey = import.meta.env.VITE_ANTHROPIC_KEY || ""
-
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search)
-    const v = p.get('vaga')
-    if (v && VAGAS[v]) setVagaId(v)
-  }, [])
 
   if (tela === "painel") return <Painel onVoltar={() => setTela("candidato")} />
 
-  if (!vagaId) return (
-    <div style={S.page}><div style={S.box}>
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{ fontSize: '48px', marginBottom: '12px' }}>👋</div>
-        <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: '0 0 8px' }}>Curseduca — Processo Seletivo</h1>
-        <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Selecione a vaga para continuar</p>
-      </div>
-      {Object.entries(VAGAS).map(([id, cfg]) => (
-        <button key={id} onClick={() => setVagaId(id)} style={{ ...S.btn, background: 'white', color: '#1e293b', border: '2px solid #e2e8f0', textAlign: 'left', padding: '20px', borderRadius: '12px', marginBottom: '12px' }}>
-          <strong style={{ display: 'block', fontSize: '16px', marginBottom: '4px' }}>{cfg.titulo}</strong>
-          <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '400' }}>{cfg.subtitulo}</span>
-        </button>
-      ))}
-      <button onClick={() => setTela("painel")} style={{ ...S.btn, background: '#1e293b', marginTop: '24px' }}>🔒 Painel G&C</button>
-    </div></div>
-  )
-
   return (
     <div style={{ position: "relative" }}>
-      <TelaCandidato apiKey={apiKey} vagaId={vagaId} onFinalizar={() => {}} />
+      <TelaCandidato apiKey={apiKey} vagaId="csm-senior" onFinalizar={() => {}} />
       <button onClick={() => setTela("painel")} style={{ position: "fixed", bottom: "16px", right: "16px", background: "#1e293b", color: "white", border: "none", borderRadius: "8px", padding: "10px 18px", fontSize: "13px", fontWeight: "600", cursor: "pointer", zIndex: 100, boxShadow: "0 4px 12px rgba(0,0,0,.3)" }}>🔒 Painel G&C</button>
     </div>
   )
