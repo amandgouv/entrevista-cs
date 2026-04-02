@@ -444,10 +444,11 @@ function Painel({ onVoltar, apiKey }) {
   const [audiosCarregados, setAudiosCarregados] = useState({})
   const [carregandoAudio, setCarregandoAudio] = useState(null)
   const [filtroStatus, setFiltroStatus] = useState("todos")
-  const [abaAtiva, setAbaAtiva] = useState("triagem") // 'triagem' | 'aprovados'
+  const [abaAtiva, setAbaAtiva] = useState("triagem") // 'triagem' | 'aprovados' | 'reprovados'
   const [carregando, setCarregando] = useState(false)
   const [reavaliando, setReavaliando] = useState(null)
   const [passando, setPassando] = useState(null)
+  const [reprovando, setReprovando] = useState(null)
 
   const carregarCandidatos = async () => {
     setCarregando(true)
@@ -525,6 +526,18 @@ function Painel({ onVoltar, apiKey }) {
     } catch (err) { alert("Erro: " + err.message) }
   }
 
+  const reprovar = async (c, e) => {
+    e.stopPropagation()
+    if (!confirm(`Reprovar ${c.nome}? Ele(a) vai para a aba Reprovados.`)) return
+    setReprovando(c.id)
+    try {
+      await updateDoc(doc(db, c.colecao, c.id), { etapa: 'reprovado', dataReprovacao: new Date().toLocaleDateString("pt-BR") })
+      setCandidatos(prev => prev.map(x => x.id === c.id ? { ...x, etapa: 'reprovado', dataReprovacao: new Date().toLocaleDateString("pt-BR") } : x))
+      setExp(null)
+    } catch (err) { alert("Erro: " + err.message) }
+    setReprovando(null)
+  }
+
   useEffect(() => { if (auth) carregarCandidatos() }, [auth])
 
   const expandir = (i, c) => { if (exp === i) { setExp(null) } else { setExp(i); carregarAudios(c) } }
@@ -546,6 +559,7 @@ function Painel({ onVoltar, apiKey }) {
     card: { background: 'white', borderRadius: '12px', padding: '20px', maxWidth: '900px', margin: '0 auto 16px', boxShadow: '0 1px 3px rgba(0,0,0,.1)', cursor: 'pointer' },
     btn: { background: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' },
     btnVerde: { background: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
+    btnVermelho: { background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
     btnCinza: { background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
     btnRoxo: { background: '#ede9fe', color: '#7c3aed', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
     out: { background: 'white', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
@@ -568,8 +582,9 @@ function Painel({ onVoltar, apiKey }) {
 
   const emTriagem = candidatos.filter(x => !x.etapa || x.etapa === 'triagem')
   const aprovados = candidatos.filter(x => x.etapa === 'aprovado')
+  const reprovados = candidatos.filter(x => x.etapa === 'reprovado')
 
-  let listaAtiva = abaAtiva === 'triagem' ? emTriagem : aprovados
+  let listaAtiva = abaAtiva === 'triagem' ? emTriagem : abaAtiva === 'aprovados' ? aprovados : reprovados
   if (abaAtiva === 'triagem' && filtroStatus !== "todos") {
     listaAtiva = listaAtiva.filter(x => x.avaliacao?.classificacao?.includes(
       filtroStatus === "avanca" ? "Avança" : filtroStatus === "talvez" ? "Talvez" : "Não avança"
@@ -582,7 +597,7 @@ function Painel({ onVoltar, apiKey }) {
       <div style={{ maxWidth: '900px', margin: '0 auto 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>Painel G&C — Entrevistas por Áudio</h1>
-          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{emTriagem.length} em triagem · {aprovados.length} aprovado(s)</p>
+          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{emTriagem.length} em triagem · {aprovados.length} aprovado(s) · {reprovados.length} reprovado(s)</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button style={sP.btn} onClick={carregarCandidatos} disabled={carregando}>{carregando ? "Carregando..." : "🔄 Atualizar"}</button>
@@ -597,6 +612,9 @@ function Painel({ onVoltar, apiKey }) {
         </button>
         <button style={sP.abaBotao(abaAtiva === 'aprovados')} onClick={() => { setAbaAtiva('aprovados'); setExp(null) }}>
           ✅ Aprovados ({aprovados.length})
+        </button>
+        <button style={sP.abaBotao(abaAtiva === 'reprovados')} onClick={() => { setAbaAtiva('reprovados'); setExp(null) }}>
+          ❌ Reprovados ({reprovados.length})
         </button>
       </div>
 
@@ -613,7 +631,7 @@ function Painel({ onVoltar, apiKey }) {
       {/* Lista */}
       {listaAtiva.length === 0 && (
         <div style={{ background: 'white', borderRadius: '12px', padding: '40px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', color: '#64748b' }}>
-          {abaAtiva === 'aprovados' ? 'Nenhum candidato aprovado ainda.' : 'Nenhum candidato nessa categoria.'}
+          {abaAtiva === 'aprovados' ? 'Nenhum candidato aprovado ainda.' : abaAtiva === 'reprovados' ? 'Nenhum candidato reprovado.' : 'Nenhum candidato nessa categoria.'}
         </div>
       )}
 
@@ -634,6 +652,11 @@ function Painel({ onVoltar, apiKey }) {
                 {x.etapa === 'aprovado' && (
                   <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>
                     ✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}
+                  </span>
+                )}
+                {x.etapa === 'reprovado' && (
+                  <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>
+                    ❌ Reprovado {x.dataReprovacao ? `em ${x.dataReprovacao}` : ''}
                   </span>
                 )}
               </div>
@@ -657,7 +680,7 @@ function Painel({ onVoltar, apiKey }) {
                     {estaReavaliando ? '⏳ Reavaliando...' : '🤖 Reavaliar com IA'}
                   </button>
 
-                  {x.etapa !== 'aprovado' ? (
+                  {x.etapa !== 'aprovado' && x.etapa !== 'reprovado' && (<>
                     <button
                       style={{ ...sP.btnVerde, opacity: estaPassando ? 0.6 : 1 }}
                       onClick={(e) => passarProximaEtapa(x, e)}
@@ -665,7 +688,16 @@ function Painel({ onVoltar, apiKey }) {
                     >
                       {estaPassando ? '⏳ Salvando...' : '✅ Passar pra próxima etapa'}
                     </button>
-                  ) : (
+                    <button
+                      style={{ ...sP.btnVermelho, opacity: reprovando === x.id ? 0.6 : 1 }}
+                      onClick={(e) => reprovar(x, e)}
+                      disabled={reprovando === x.id}
+                    >
+                      {reprovando === x.id ? '⏳ Salvando...' : '❌ Reprovar'}
+                    </button>
+                  </>)}
+
+                  {(x.etapa === 'aprovado' || x.etapa === 'reprovado') && (
                     <button style={sP.btnCinza} onClick={(e) => voltarParaTriagem(x, e)}>
                       ↩ Voltar pra triagem
                     </button>
