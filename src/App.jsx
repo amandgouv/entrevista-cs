@@ -126,6 +126,45 @@ CLASSIFICAÇÃO:
 - ✅ Avança: score ≥ 72 E demonstrou pelo menos 3 dos 4 critérios com substância real.
 - 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial.
 - ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.`
+  },
+
+  'head-produto': {
+    titulo: 'Head de Produto',
+    colecao: 'candidatos-head-produto',
+    perguntas: [
+      "Descreve uma decisão de produto que você tomou baseada em dados. Qual métrica estava em jogo, o que os dados mostravam e o que você decidiu fazer — mesmo que contrariasse a opinião de alguém?",
+      "Como você garante que o time de produto está trabalhando na coisa certa? Me dá um exemplo concreto de quando você precisou repriorizar algo no meio do caminho e como conduziu isso com o time.",
+      "Qual foi o produto mais incompleto com o qual você trabalhou? O que faltava, o que você fez com isso e o que aprendeu sobre construir em ambiente de incerteza?"
+    ],
+    promptSistema: `Você é um recrutador sênior da Curseduca avaliando candidatos para a vaga de Head de Produto. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem.
+
+PESO DA AVALIAÇÃO:
+- 70% do score deve refletir a qualidade do CONTEÚDO — profundidade, exemplos reais, raciocínio de produto.
+- 30% do score deve refletir CLAREZA E OBJETIVIDADE — se a pessoa comunica bem, sem enrolar. Quem é muito prolixo perde pontos mesmo tendo conteúdo, porque clareza é competência esperada de uma liderança de produto.
+
+Critérios de avaliação (peso 70% — conteúdo):
+1. Decisão baseada em dados com tensão real: cita métrica concreta, descreve o que os dados mostravam e toma uma decisão — mesmo contra opinião de alguém. Sinal de sênior: mostra a tensão e a escolha clara. Sinal de júnior: descreve o dado mas não a decisão difícil, ou a decisão não tinha risco real.
+2. Liderança de priorização: sabe dar direção ao time, não só organizar o que o time já quer fazer. Sinal de sênior: reprioriza com critério claro, comunica ao time o porquê, absorve a resistência. Sinal de júnior: facilita o que o time quer, reprioriza por pressão externa sem raciocínio próprio.
+3. Tolerância real a ambiguidade: age e decide em ambiente incompleto — não trava esperando ter tudo resolvido. Sinal de sênior: descreve o que faltava, o que fez com isso e o que aprendeu de forma honesta. Sinal de júnior: romantiza a incerteza sem mostrar como lidou na prática, ou só menciona que o ambiente era caótico.
+
+Critério de avaliação (peso 30% — clareza):
+4. Comunicação clara e objetiva: responde o que foi perguntado sem enrolar. Quem lidera produto precisa comunicar com precisão. Penalize prolixidade real: resposta circular, repetição de ideias, excesso de contexto sem chegar ao ponto. NÃO penalize quem deu detalhes necessários para explicar bem o caso — só penalize quando a extensão não adiciona substância.
+
+REGRAS DE FORMA:
+- Transcrições automáticas têm erros — ignore completamente erros de pontuação e palavras trocadas.
+- Se transcrição estiver '[transcrição não capturada]', não penalize — note que o áudio deve ser ouvido.
+
+CALIBRAÇÃO DE SCORE:
+Score 80+: exemplos concretos com tensão real, decisões claras com critério, comunicação direta. Muito raro.
+Score 65-79: exemplos reais com substância, raciocínio de liderança visível, comunicação razoavelmente objetiva.
+Score 50-64: tem experiência mas ficou no genérico — dado sem decisão difícil, priorização sem critério próprio, ou muito prolixo.
+Score abaixo de 50: respostas sem caso concreto, perfil de facilitador sem liderança real, ou comunicação tão confusa que compromete a avaliação.
+A maioria cai entre 50 e 72. Reserve abaixo de 50 para quem claramente não tem perfil. Reserve acima de 75 para quem claramente se destacou.
+
+CLASSIFICAÇÃO:
+- ✅ Avança: score ≥ 72 E demonstrou pelo menos 2 dos 3 critérios de conteúdo com substância real.
+- 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial.
+- ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.`
   }
 }
 
@@ -514,9 +553,9 @@ function Painel({ onVoltar, apiKey }) {
   const [auth, setAuth] = useState(false)
   const [candidatos, setCandidatos] = useState([])
   const [exp, setExp] = useState(null)
-  const [filtroVaga, setFiltroVaga] = useState("todos")
+  const [vagaAtiva, setVagaAtiva] = useState("csm-senior")
   const [filtroStatus, setFiltroStatus] = useState("todos")
-  const [abaAtiva, setAbaAtiva] = useState("triagem")
+  const [abaAtiva, setAbaAtiva] = useState("triagem") // triagem | aprovados | reprovados | links
   const [carregando, setCarregando] = useState(false)
   const [reavaliando, setReavaliando] = useState(null)
   const [passando, setPassando] = useState(null)
@@ -637,7 +676,7 @@ function Painel({ onVoltar, apiKey }) {
     btnRoxo: { background: '#ede9fe', color: '#7c3aed', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
     out: { background: 'white', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
     inp: { width: '100%', padding: '12px 16px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '16px', boxSizing: 'border-box', outline: 'none', marginBottom: '16px' },
-    vagaBadge: (vaga) => ({ display: 'inline-block', background: vaga === 'csm-senior' ? '#ede9fe' : vaga === 'salesops' ? '#fef9c3' : '#fce7f3', color: vaga === 'csm-senior' ? '#7c3aed' : vaga === 'salesops' ? '#92400e' : '#9d174d', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }),
+    vagaBadge: (vaga) => ({ display: 'inline-block', background: vaga === 'csm-senior' ? '#ede9fe' : vaga === 'salesops' ? '#fef9c3' : vaga === 'copywriter-sr' ? '#fce7f3' : '#dcfce7', color: vaga === 'csm-senior' ? '#7c3aed' : vaga === 'salesops' ? '#92400e' : vaga === 'copywriter-sr' ? '#9d174d' : '#15803d', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }),
     abaBotao: (ativa) => ({ background: ativa ? '#7c3aed' : 'white', color: ativa ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }),
     filtroBotao: (ativo) => ({ background: ativo ? '#7c3aed' : 'white', color: ativo ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' })
   }
@@ -654,12 +693,12 @@ function Painel({ onVoltar, apiKey }) {
     </div>
   )
 
-  const emTriagem = candidatos.filter(x => !x.etapa || x.etapa === 'triagem')
-  const aprovados = candidatos.filter(x => x.etapa === 'aprovado')
-  const reprovados = candidatos.filter(x => x.etapa === 'reprovado')
+  const candidatosDaVaga = candidatos.filter(x => x.vaga === vagaAtiva)
+  const emTriagem = candidatosDaVaga.filter(x => !x.etapa || x.etapa === 'triagem')
+  const aprovados = candidatosDaVaga.filter(x => x.etapa === 'aprovado')
+  const reprovados = candidatosDaVaga.filter(x => x.etapa === 'reprovado')
 
   let listaAtiva = abaAtiva === 'triagem' ? emTriagem : abaAtiva === 'aprovados' ? aprovados : reprovados
-  if (filtroVaga !== "todos") listaAtiva = listaAtiva.filter(x => x.vaga === filtroVaga)
   if (abaAtiva === 'triagem' && filtroStatus !== "todos") {
     listaAtiva = listaAtiva.filter(x => x.avaliacao?.classificacao?.includes(
       filtroStatus === "avanca" ? "Avança" : filtroStatus === "talvez" ? "Talvez" : "Não avança"
@@ -668,43 +707,82 @@ function Painel({ onVoltar, apiKey }) {
 
   return (
     <div style={sP.page}>
+      {/* Header */}
       <div style={{ maxWidth: '900px', margin: '0 auto 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>Painel G&C — Entrevistas por Áudio</h1>
-          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>{emTriagem.length} em triagem · {aprovados.length} aprovado(s) · {reprovados.length} reprovado(s)</p>
-        </div>
+        <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>Painel G&C — Entrevistas por Áudio</h1>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button style={sP.btn} onClick={carregarCandidatos} disabled={carregando}>{carregando ? "Carregando..." : "🔄 Atualizar"}</button>
           <button style={sP.out} onClick={onVoltar}>← Voltar</button>
         </div>
       </div>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto 16px', display: 'flex', gap: '8px' }}>
-        <button style={sP.abaBotao(abaAtiva === 'triagem')} onClick={() => { setAbaAtiva('triagem'); setExp(null) }}>📋 Triagem ({emTriagem.length})</button>
-        <button style={sP.abaBotao(abaAtiva === 'aprovados')} onClick={() => { setAbaAtiva('aprovados'); setExp(null) }}>✅ Aprovados ({aprovados.length})</button>
-        <button style={sP.abaBotao(abaAtiva === 'reprovados')} onClick={() => { setAbaAtiva('reprovados'); setExp(null) }}>❌ Reprovados ({reprovados.length})</button>
-      </div>
-
-      <div style={{ maxWidth: '900px', margin: '0 auto 20px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: '13px', color: '#64748b' }}>Vaga:</span>
-        {[["todos", "Todas"], ["csm-senior", "CSM Sênior"], ["salesops", "Sales Ops"], ["copywriter-sr", "Copywriter Sr."]].map(([v, l]) => (
-          <button key={v} onClick={() => setFiltroVaga(v)} style={sP.filtroBotao(filtroVaga === v)}>{l}</button>
+      {/* Menu de vagas */}
+      <div style={{ maxWidth: '900px', margin: '0 auto 4px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        {[
+          ['csm-senior', 'CSM Sênior'],
+          ['salesops', 'Sales Ops'],
+          ['copywriter-sr', 'Copywriter Sr.'],
+          ['head-produto', 'Head de Produto'],
+        ].map(([v, l]) => (
+          <button key={v} onClick={() => { setVagaAtiva(v); setAbaAtiva('triagem'); setExp(null); setFiltroStatus('todos') }}
+            style={{ ...sP.abaBotao(vagaAtiva === v), fontSize: '13px', padding: '7px 16px' }}>{l}</button>
         ))}
-        {abaAtiva === 'triagem' && (<>
-          <span style={{ fontSize: '13px', color: '#64748b', marginLeft: '8px' }}>IA:</span>
-          {[["todos", "Todos"], ["avanca", "✅ Avança"], ["talvez", "🟡 Talvez"], ["nao", "❌ Não avança"]].map(([v, l]) => (
-            <button key={v} onClick={() => setFiltroStatus(v)} style={sP.filtroBotao(filtroStatus === v)}>{l}</button>
-          ))}
-        </>)}
+        <button onClick={() => setAbaAtiva('links')}
+          style={{ ...sP.abaBotao(abaAtiva === 'links'), fontSize: '13px', padding: '7px 16px', marginLeft: 'auto' }}>🔗 Links</button>
       </div>
 
-      {listaAtiva.length === 0 && (
+      {/* Sub-abas da vaga ativa */}
+      {abaAtiva !== 'links' && (
+        <div style={{ maxWidth: '900px', margin: '8px auto 16px', display: 'flex', gap: '6px', borderBottom: '2px solid #e2e8f0', paddingBottom: '0' }}>
+          {[['triagem', `📋 Triagem (${emTriagem.length})`], ['aprovados', `✅ Aprovados (${aprovados.length})`], ['reprovados', `❌ Reprovados (${reprovados.length})`]].map(([v, l]) => (
+            <button key={v} onClick={() => { setAbaAtiva(v); setExp(null) }} style={{ background: 'none', border: 'none', borderBottom: abaAtiva === v ? '2px solid #7c3aed' : '2px solid transparent', marginBottom: '-2px', padding: '8px 16px', fontSize: '13px', fontWeight: abaAtiva === v ? '700' : '500', color: abaAtiva === v ? '#7c3aed' : '#64748b', cursor: 'pointer' }}>{l}</button>
+          ))}
+          {abaAtiva === 'triagem' && (
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>IA:</span>
+              {[["todos", "Todos"], ["avanca", "✅"], ["talvez", "🟡"], ["nao", "❌"]].map(([v, l]) => (
+                <button key={v} onClick={() => setFiltroStatus(v)} style={{ ...sP.filtroBotao(filtroStatus === v), padding: '4px 10px', fontSize: '12px' }}>{l}</button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tela de links */}
+      {abaAtiva === 'links' && (
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{ background: 'white', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 3px rgba(0,0,0,.1)' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}>Links para candidatos</h2>
+            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '24px' }}>Copie o link da vaga e envie diretamente para o candidato. Cada link abre só aquela vaga.</p>
+            {[
+              ['csm-senior', 'Customer Success Manager Sênior', '#ede9fe', '#7c3aed'],
+              ['salesops', 'Sales Operations', '#fef9c3', '#92400e'],
+              ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
+              ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
+            ].map(([id, titulo, bg, cor]) => {
+              const url = `${window.location.origin}/?vaga=${id}`
+              return (
+                <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: '#f8fafc', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ background: bg, color: cor, borderRadius: '99px', padding: '3px 12px', fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{titulo}</span>
+                  <span style={{ flex: 1, fontSize: '13px', color: '#475569', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url}</span>
+                  <button onClick={() => { navigator.clipboard.writeText(url); alert('Link copiado!') }}
+                    style={{ background: '#7c3aed', color: 'white', border: 'none', borderRadius: '7px', padding: '7px 14px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    📋 Copiar
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {abaAtiva !== 'links' && listaAtiva.length === 0 && (
         <div style={{ background: 'white', borderRadius: '12px', padding: '40px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', color: '#64748b' }}>
           {abaAtiva === 'aprovados' ? 'Nenhum candidato aprovado ainda.' : abaAtiva === 'reprovados' ? 'Nenhum candidato reprovado.' : 'Nenhum candidato nessa categoria.'}
         </div>
       )}
 
-      {listaAtiva.map((x, i) => {
+      {abaAtiva !== 'links' && listaAtiva.map((x, i) => {
         const vc = VAGAS[x.vaga] || VAGAS['csm-senior']
         const aud = audiosCarregados[x.id] || {}
         const estaReavaliando = reavaliando === x.id
@@ -715,7 +793,7 @@ function Painel({ onVoltar, apiKey }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: '16px' }}>{x.nome}</strong>
-                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'salesops' ? 'Sales Ops' : 'Copywriter Sr.'}</span>
+                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : 'Head de Produto'}</span>
                 <span style={{ color: '#94a3b8', fontSize: '13px' }}>{x.data}</span>
                 {x.etapa === 'aprovado' && <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}</span>}
                 {x.etapa === 'reprovado' && <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>❌ Reprovado {x.dataReprovacao ? `em ${x.dataReprovacao}` : ''}</span>}
