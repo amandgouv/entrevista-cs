@@ -2,10 +2,11 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { db } from './firebase'
 import { collection, addDoc, getDocs, orderBy, query, doc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore'
 
+// ─── CONFIG DE VAGAS ─────────────────────────────────────────────────────────
+
 const VAGAS = {
   'csm-senior': {
     titulo: 'Customer Success Manager Sênior',
-    subtitulo: 'Gestão estratégica de contas B2B com foco em resultado e expansão',
     colecao: 'candidatos-csm-senior',
     perguntas: [
       "Me conta um caso em que você conectou o uso do produto com um resultado real de negócio do cliente. O que você mediu e como apresentou isso pra ele?",
@@ -13,13 +14,122 @@ const VAGAS = {
       "Me conta um caso em que você identificou uma oportunidade de expansão a partir de um gap de resultado do cliente — não de uma meta de upsell. Como foi essa conversa?",
       "Me conta uma situação em que você precisou dizer a alguém — cliente, liderança ou parceiro — que a estratégia que estava sendo seguida não ia funcionar. Como você conduziu essa conversa?"
     ],
-    criterios: `Critérios de avaliação:
+    promptSistema: `Você é um recrutador sênior da Curseduca avaliando candidatos para a vaga de Customer Success Manager Sênior B2B. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem.
+
+Critérios de avaliação:
 1. Orientação ao resultado de negócio: conecta o uso do produto com métricas reais do cliente (receita, conversão, churn, ROI) — não fala só em adoção, NPS ou satisfação.
 2. Proatividade e detecção de risco: identifica sinais de churn por dados ou comportamento antes do cliente verbalizar — age antes de virar crise.
 3. Expansão consultiva: identifica oportunidades de expansão a partir de gaps reais de resultado — não a partir de metas de upsell ou pressão comercial.
-4. Postura consultiva e desafio com respeito: tem segurança pra dizer que uma estratégia não vai funcionar e conduz essa conversa com dados e alternativa — não concorda pra evitar conflito.`
+4. Postura consultiva e desafio com respeito: tem segurança pra dizer que uma estratégia não vai funcionar e conduz essa conversa com dados e alternativa — não concorda pra evitar conflito.
+
+REGRAS DE AVALIAÇÃO DE CONTEÚDO (aplique com rigor):
+- Exija exemplos concretos e específicos. Respostas genéricas sem caso real = alerta grave.
+- Exija resultados tangíveis. Quem fala só em processo sem resultado perde pontos significativos.
+- Detecção de churn: exija sinais concretos — dados, comportamento, frequência de uso. "Percebi que o cliente estava insatisfeito" sem evidência não conta.
+- Expansão: exija gap real de resultado, não meta de upsell disfarçada.
+- Postura consultiva: exija dado ou argumento sólido ao discordar.
+
+REGRAS DE FORMA (seja tolerante):
+- Transcrições automáticas têm erros — ignore completamente. Foque no raciocínio, não na gramática.
+- Respostas longas são normais em áudio — NÃO penalize extensão. Só registre alerta se for completamente circular e vazia.
+- Se transcrição estiver '[transcrição não capturada]', não penalize — note que o áudio deve ser ouvido.
+
+CALIBRAÇÃO DE SCORE:
+Score 80+: exemplos com métricas reais, raciocínio de negócio claro. Muito raro.
+Score 65-79: exemplos reais com resultado percebido, mesmo sem métrica exata. Perfil claramente sênior.
+Score 50-64: tem experiência mas ficou no processo sem conectar com resultado real.
+Score abaixo de 50: respostas genéricas, perfil operacional sem visão de negócio.
+A maioria cai entre 50 e 72. Reserve abaixo de 50 para quem claramente não tem perfil. Reserve acima de 75 para quem claramente se destacou.
+
+CLASSIFICAÇÃO:
+- ✅ Avança: score ≥ 72 E demonstrou pelo menos 3 dos 4 critérios com substância real.
+- 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial.
+- ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.`
+  },
+
+  'salesops': {
+    titulo: 'Sales Operations',
+    colecao: 'candidatos-salesops',
+    perguntas: [
+      "Me conta uma situação em que você precisou organizar ou recuperar a qualidade de dados de um CRM. O que estava quebrado, o que você fez e como ficou?",
+      "Me dá um exemplo de uma análise que você fez que ajudou alguém a tomar uma decisão de negócio. O que você encontrou e o que mudou por causa disso?",
+      "Você já desenhou ou acompanhou uma campanha de incentivo pra time de vendas ou CS? Me conta como foi — o que você considerou na hora de montar e como acompanhou o resultado?",
+      "Você já segmentou ou ajudou a segmentar uma base de clientes? Me conta como você definiu os critérios e pra que isso foi usado."
+    ],
+    promptSistema: `Você é um recrutador sênior da Curseduca avaliando candidatos para a vaga de Sales Operations. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem.
+
+Critérios de avaliação:
+1. Governança de CRM: entende que qualidade de CRM é processo, não regra — menciona mecanismos concretos (automações, rituais, validações). Sinal de sênior: fala em impacto downstream (forecast, segmentação, incentivos). Sinal de júnior: "treinei o time" sem processo de sustentação.
+2. Análise orientada a decisão: conecta análise com decisão real — não fica em "apresentei um dashboard". Sinal de sênior: a análise gerou ação concreta com resultado mensurável. Sinal de júnior: parou na entrega do dado sem conexão com o que aconteceu depois.
+3. Incentivos e metas: entende que incentivo mal desenhado gera comportamento errado. Sinal de sênior: menciona trade-offs que considerou e como acompanhou o impacto. Sinal de júnior: descreve só a mecânica sem conectar com resultado de negócio.
+4. Carteirização e segmentação: define critérios com lógica de risco ou resultado, não só por tamanho ou segmento genérico. Sinal de sênior: a segmentação gerou mudança na operação. Sinal de júnior: "dividi por segmento" sem critério de negócio.
+
+REGRAS DE AVALIAÇÃO DE CONTEÚDO (aplique com rigor):
+- Exija exemplos concretos. Respostas genéricas sem caso real = alerta grave.
+- Exija conexão entre dado e decisão. Quem entregou relatório sem falar o que mudou perde pontos significativos.
+- Não penalize por não ter atuado em empresa grande — avalie a profundidade do raciocínio, não o tamanho do logo.
+
+REGRAS DE FORMA (seja tolerante):
+- Transcrições automáticas têm erros — ignore completamente. Foque no raciocínio, não na gramática.
+- Respostas longas são normais em áudio — NÃO penalize extensão. Só registre alerta se for completamente circular e vazia.
+- Se transcrição estiver '[transcrição não capturada]', não penalize — note que o áudio deve ser ouvido.
+
+CALIBRAÇÃO DE SCORE:
+Score 80+: exemplos com impacto mensurável, raciocínio de negócio claro em pelo menos 3 critérios. Muito raro.
+Score 65-79: exemplos reais com resultado percebido. Demonstrou lógica analítica com substância. Faltou profundidade em 1-2 critérios.
+Score 50-64: tem familiaridade mas ficou no superficial — processo sem resultado, ferramenta sem raciocínio.
+Score abaixo de 50: respostas genéricas, perfil operacional sem visão analítica ou de negócio.
+A maioria cai entre 50 e 72. Reserve abaixo de 50 para quem claramente não tem perfil. Reserve acima de 75 para quem claramente se destacou.
+
+CLASSIFICAÇÃO:
+- ✅ Avança: score ≥ 72 E demonstrou pelo menos 3 dos 4 critérios com substância real.
+- 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial.
+- ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.`
+  }
+
+  'copywriter-sr': {
+    titulo: 'Copywriter Sênior',
+    colecao: 'candidatos-copywriter-sr',
+    perguntas: [
+      "Descreve um funil completo que você construiu do zero — qual era o objetivo, o que você escreveu em cada etapa e qual foi o resultado.",
+      "Antes de entregar um copy, o que você faz pra garantir que está bom? Me conta o seu processo.",
+      "Como você usa IA no seu dia a dia de trabalho? Me dá um exemplo concreto de algo que você fez com IA essa semana.",
+      "Me conta uma vez que você trouxe uma ideia de funil ou estratégia sem ninguém ter pedido. O que você viu, o que propôs e o que aconteceu."
+    ],
+    promptSistema: `Você é um recrutador sênior da Curseduca avaliando candidatos para a vaga de Copywriter Sênior. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem.
+
+Critérios de avaliação:
+1. Visão de funil completo: pensa e executa TOFU, MOFU e BOFU — não só peças isoladas. Sinal de sênior: descreve o raciocínio por trás de cada etapa e conecta com resultado de conversão. Sinal de júnior: fala em peças sem contexto de funil ou objetivo de negócio.
+2. Critério editorial próprio: tem processo de revisão antes de entregar — não depende do feedback do cliente para identificar o que está fraco. Sinal de sênior: descreve checklist ou filtro próprio, menciona o que elimina antes de passar para frente. Sinal de júnior: "releio uma vez" ou não tem processo claro.
+3. Uso fluente de IA: usa IA como ferramenta de produção com exemplo concreto e recente — não como muleta nem como resistência. Sinal de sênior: exemplo específico de como integrou IA no fluxo de trabalho essa semana. Sinal de júnior: resposta genérica ("uso pra dar ideias") sem caso real.
+4. Proatividade real: traz ideias sem ser acionado — identifica oportunidade, propõe e executa. Sinal de sênior: descreve caso concreto com contexto, proposta e desdobramento. Sinal de júnior: confunde proatividade com "sempre faço além do pedido" sem exemplo real.
+
+REGRAS DE AVALIAÇÃO DE CONTEÚDO (aplique com rigor):
+- Exija exemplos concretos. "Sempre reviso com cuidado" sem processo descrito = alerta grave.
+- Exija conexão com resultado. Copy sem métrica ou feedback de performance perde pontos.
+- Uso de IA: exija exemplo desta semana ou recente — resposta vaga não conta.
+- Proatividade: exija caso real com o que aconteceu depois — não aceite intenção como evidência.
+
+REGRAS DE FORMA (seja tolerante):
+- Transcrições automáticas têm erros — ignore completamente. Foque no raciocínio, não na gramática.
+- Respostas longas são normais em áudio — NÃO penalize extensão. Só registre alerta se for completamente circular e vazia.
+- Se transcrição estiver '[transcrição não capturada]', não penalize — note que o áudio deve ser ouvido.
+
+CALIBRAÇÃO DE SCORE:
+Score 80+: exemplos concretos em todos os critérios, processo editorial claro, uso de IA com caso real, proatividade com desdobramento. Muito raro.
+Score 65-79: exemplos reais na maioria dos critérios, processo próprio descrito mesmo que simples, IA com algum exemplo concreto. Perfil claramente sênior.
+Score 50-64: tem experiência mas ficou no genérico — processo vago, funil sem resultado, IA sem exemplo real.
+Score abaixo de 50: respostas sem caso concreto, perfil executivo sem visão estratégica, não sabe o que é funil ou CAC.
+A maioria cai entre 50 e 72. Reserve abaixo de 50 para quem claramente não tem perfil. Reserve acima de 75 para quem claramente se destacou.
+
+CLASSIFICAÇÃO:
+- ✅ Avança: score ≥ 72 E demonstrou pelo menos 3 dos 4 critérios com substância real.
+- 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial.
+- ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.\``
   }
 }
+
+// ─── UTILITÁRIOS ─────────────────────────────────────────────────────────────
 
 const TEMPO_LIMITE = 300
 const SENHA_PAINEL = "@Waid2626"
@@ -47,18 +157,22 @@ const CHUNK_SIZE = 900000
 
 function splitBase64(b64) {
   const chunks = []
-  for (let i = 0; i < b64.length; i += CHUNK_SIZE) {
-    chunks.push(b64.slice(i, i + CHUNK_SIZE))
-  }
+  for (let i = 0; i < b64.length; i += CHUNK_SIZE) chunks.push(b64.slice(i, i + CHUNK_SIZE))
   return chunks
 }
 
-function joinBase64(chunks) {
-  return chunks.join('')
+function joinBase64(chunks) { return chunks.join('') }
+
+function getVagaFromUrl() {
+  const params = new URLSearchParams(window.location.search)
+  const vaga = params.get('vaga')
+  return VAGAS[vaga] ? vaga : null
 }
 
-async function avaliarRespostas(apiKey, nome, vaga, respostas) {
-  const config = VAGAS[vaga]
+// ─── AVALIAÇÃO IA ────────────────────────────────────────────────────────────
+
+async function avaliarRespostas(apiKey, nome, vagaId, respostas) {
+  const config = VAGAS[vagaId]
   const semTranscricao = respostas.every(r => !r.transcricao || r.transcricao.trim().length < 10)
 
   if (semTranscricao) {
@@ -66,47 +180,16 @@ async function avaliarRespostas(apiKey, nome, vaga, respostas) {
       score: null,
       classificacao: "🎧 Ouvir áudio",
       pontos_fortes: [],
-      alertas: ["Transcrição automática não capturou as respostas — isso pode acontecer por ruído no ambiente, uso de celular ou microfone com permissão parcial."],
-      resumo: "Não foi possível avaliar automaticamente. Ouça os áudios diretamente no painel para fazer sua avaliação."
+      alertas: ["Transcrição automática não capturou as respostas — ouça os áudios diretamente no painel."],
+      resumo: "Não foi possível avaliar automaticamente. Ouça os áudios para fazer sua avaliação."
     }
   }
 
-  const prompt = `Você é um recrutador sênior da Curseduca avaliando candidatos para uma vaga exigente de Customer Success Manager Sênior B2B. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem.
+  const prompt = `${config.promptSistema}
 
 Candidato: "${nome}"
 
 ${respostas.map((r, i) => `Pergunta ${i + 1}: ${config.perguntas[i]}\nResposta: ${r.transcricao && r.transcricao.trim().length > 10 ? r.transcricao : '[transcrição não capturada]'}\n`).join('\n')}
-
-${config.criterios}
-
-REGRAS DE AVALIAÇÃO DE CONTEÚDO (aplique com rigor):
-- Exija exemplos concretos e específicos. Respostas genéricas como "eu sempre acompanho os clientes de perto" ou "costumo ser proativo" sem caso real = alerta grave.
-- Exija métricas ou resultados tangíveis quando a pergunta pede. Quem fala só em processo ("fiz reunião", "montei plano de ação") sem resultado mensurável perde pontos significativos.
-- Detecção de churn: exija sinais concretos que o candidato identificou (dados, comportamento, frequência de uso, ticket aberto, etc.) — não aceite "percebi que o cliente estava insatisfeito" sem evidência.
-- Expansão: exija que a oportunidade tenha vindo de um gap real de resultado do cliente, não de uma meta interna. Se soar como upsell disfarçado, aponte.
-- Postura consultiva: exija que o candidato tenha apresentado dado ou argumento sólido ao discordar — não só "dei minha opinião com respeito".
-
-REGRAS DE FORMA (seja tolerante):
-- Transcrições automáticas têm erros de pontuação, palavras trocadas e frases incompletas — ignore completamente. Foque no raciocínio, não na gramática.
-- Respostas longas ou detalhadas são normais em áudio — NÃO penalize extensão. Só registre como alerta se a resposta for completamente circular e vazia após ouvir tudo.
-- Se uma transcrição estiver '[transcrição não capturada]', não penalize — registre que o áudio precisa ser ouvido manualmente.
-
-CALIBRAÇÃO DE SCORE — use estes exemplos como âncora:
-
-Score 80+: candidato citou cliente real, métrica concreta (ex: "reduzi churn de 18% pra 9% identificando queda de login antes da renovação"), mostrou raciocínio de negócio claro, desafiou com dado. Muito raro.
-
-Score 65-79: candidato deu exemplos reais com resultado percebido ("o cliente renovou e expandiu", "conseguimos reverter a saída"), mesmo sem métrica exata. Demonstrou lógica de detecção ou expansão consultiva com substância. Faltou precisão em 1-2 critérios mas o perfil é claramente sênior.
-
-Score 50-64: candidato tem experiência e deu exemplos, mas ficou no processo ("fiz QBR", "montei plano de sucesso", "conversei com o cliente") sem conectar com resultado real. Ou foi sênior em 2 critérios e operacional nos outros 2.
-
-Score abaixo de 50: respostas sem caso real identificável, perfil claramente operacional/suporte sem visão de negócio, ou não respondeu à pergunta de fato.
-
-IMPORTANTE: a maioria dos candidatos reais cai entre 50 e 72. Reserve abaixo de 50 somente para quem claramente não tem perfil sênior. Reserve acima de 75 somente para quem claramente se destacou com substância real.
-
-CLASSIFICAÇÃO:
-- ✅ Avança: score ≥ 72 E demonstrou pelo menos 3 dos 4 critérios com substância real.
-- 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial.
-- ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.
 
 Responda APENAS em JSON válido:
 {"score":<0-100>,"classificacao":"<✅ Avança | 🟡 Talvez | ❌ Não avança>","pontos_fortes":["..."],"alertas":["..."],"resumo":"<2 frases>"}`
@@ -135,6 +218,8 @@ Responda APENAS em JSON válido:
   }
 }
 
+// ─── ESTILOS COMPARTILHADOS ──────────────────────────────────────────────────
+
 const S = {
   page: { minHeight: '100vh', background: 'linear-gradient(135deg,#0f172a,#1e293b)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: 'system-ui,sans-serif' },
   box: { background: 'white', borderRadius: '16px', padding: '40px', maxWidth: '600px', width: '100%', boxShadow: '0 25px 50px rgba(0,0,0,.3)' },
@@ -149,8 +234,21 @@ const S = {
   aviso: { background: '#f0fdf4', borderRadius: '12px', padding: '16px 20px', marginBottom: '24px', borderLeft: '4px solid #16a34a' },
   avisoAmarelo: { background: '#fffbeb', borderRadius: '12px', padding: '14px 18px', marginBottom: '24px', borderLeft: '4px solid #f59e0b' },
   timer: (d) => ({ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '10px', background: d ? '#fef2f2' : '#f8fafc', border: `2px solid ${d ? '#dc2626' : '#e2e8f0'}`, marginBottom: '16px', fontSize: '20px', fontWeight: '700', color: d ? '#dc2626' : '#1e293b', fontVariantNumeric: 'tabular-nums' }),
-  audio: { width: '100%', borderRadius: '8px', marginTop: '12px' },
   sc: (n) => ({ display: 'inline-block', background: n >= 70 ? '#dcfce7' : n >= 50 ? '#fef9c3' : '#fee2e2', color: n >= 70 ? '#16a34a' : n >= 50 ? '#ca8a04' : '#dc2626', borderRadius: '99px', padding: '4px 14px', fontSize: '13px', fontWeight: '700' })
+}
+
+// ─── TELA LINK INVÁLIDO ──────────────────────────────────────────────────────
+
+function TelaLinkInvalido() {
+  return (
+    <div style={S.page}>
+      <div style={{ ...S.box, textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔗</div>
+        <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#0f172a', marginBottom: '8px' }}>Link inválido</h2>
+        <p style={{ color: '#64748b', fontSize: '14px', lineHeight: '1.6' }}>Este link não corresponde a nenhuma vaga ativa. Verifique o link que você recebeu ou entre em contato com a equipe de Gente & Cultura da Curseduca.</p>
+      </div>
+    </div>
+  )
 }
 
 // ─── TELA CANDIDATO ──────────────────────────────────────────────────────────
@@ -190,9 +288,7 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
   }, [])
 
   useEffect(() => { return () => { pararGravacao() } }, [pararGravacao])
-  useEffect(() => {
-    return () => { reviewUrls.forEach(u => { try { URL.revokeObjectURL(u) } catch {} }) }
-  }, [reviewUrls])
+  useEffect(() => { return () => { reviewUrls.forEach(u => { try { URL.revokeObjectURL(u) } catch {} }) } }, [reviewUrls])
 
   const iniciarGravacao = async () => {
     limparEstado()
@@ -230,8 +326,6 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
     }, 1000)
   }
 
-  const regravar = () => { limparEstado() }
-
   const salvarRespostaAtual = (blob, transcrAtual, tempoAtual, arr) => {
     const novas = [...arr]
     novas[pergAtual] = { blob, transcricao: transcrAtual, duracao: TEMPO_LIMITE - tempoAtual }
@@ -247,18 +341,15 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
     } else {
       if (audioUrl) URL.revokeObjectURL(audioUrl)
       setAudioBlob(null); setAudioUrl(null); setTranscricao(""); transcricaoRef.current = ""
-      const urls = novas.map(r => URL.createObjectURL(r.blob))
-      setReviewUrls(urls); setRevisando(true)
+      setReviewUrls(novas.map(r => URL.createObjectURL(r.blob)))
+      setRevisando(true)
     }
   }
 
   const voltar = () => {
     if (gravando) pararGravacao()
     let novas = respostas
-    if (audioBlob) {
-      novas = salvarRespostaAtual(audioBlob, transcricaoRef.current || transcricao, tempoRestante, respostas)
-      setRespostas(novas)
-    }
+    if (audioBlob) { novas = salvarRespostaAtual(audioBlob, transcricaoRef.current || transcricao, tempoRestante, respostas); setRespostas(novas) }
     if (audioUrl) URL.revokeObjectURL(audioUrl)
     const prev = novas[pergAtual - 1]
     if (prev) {
@@ -342,13 +433,7 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
           <p style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: '700', color: '#7c3aed' }}>Pergunta {i + 1}</p>
           <p style={{ margin: '0 0 12px', fontSize: '14px', color: '#1e293b', lineHeight: '1.5' }}>{config.perguntas[i]}</p>
           <audio controls src={reviewUrls[i]} style={{ width: '100%', borderRadius: '8px' }} />
-          <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#7c3aed' }}>⏱ Duração: {formatarTempo(r.duracao)}</p>
-          {r.transcricao && (
-            <details style={{ marginTop: '8px' }}>
-              <summary style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>Ver transcrição automática</summary>
-              <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>{r.transcricao}</p>
-            </details>
-          )}
+          <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#7c3aed' }}>⏱ {formatarTempo(r.duracao)}</p>
         </div>
       ))}
       <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
@@ -367,21 +452,20 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       </div>
       <div style={S.aviso}>
         <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#15803d', lineHeight: '1.7' }}>Olá! Essa é uma etapa do nosso processo seletivo feita por áudio.</p>
-        <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#15803d', lineHeight: '1.7' }}>Você vai responder <strong>{config.perguntas.length} perguntas</strong> gravando sua voz. Cada resposta tem um limite de <strong>5 minutos</strong>. Nosso time vai ouvir suas respostas diretamente.</p>
-        <p style={{ margin: 0, fontSize: '14px', color: '#15803d', lineHeight: '1.7' }}>Responda com naturalidade, como se estivesse em uma conversa. Seja direto(a) e objetivo(a). 🙌</p>
+        <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#15803d', lineHeight: '1.7' }}>Você vai responder <strong>{config.perguntas.length} perguntas</strong> gravando sua voz. Cada resposta tem um limite de <strong>5 minutos</strong>.</p>
+        <p style={{ margin: 0, fontSize: '14px', color: '#15803d', lineHeight: '1.7' }}>Responda com naturalidade, como se estivesse em uma conversa. 🙌</p>
       </div>
       <div style={S.avisoAmarelo}>
-        <p style={{ margin: 0, fontSize: '13px', color: '#92400e', lineHeight: '1.6' }}>
-          ⚠️ <strong>Sobre a transcrição automática:</strong> o sistema pode não capturar todas as palavras corretamente — e tudo bem! O time de Gente & Cultura vai <strong>ouvir os áudios</strong> diretamente. Fale com tranquilidade. 🎧
-        </p>
+        <p style={{ margin: 0, fontSize: '13px', color: '#92400e', lineHeight: '1.6' }}>⚠️ <strong>Sobre a transcrição automática:</strong> o sistema pode não capturar todas as palavras — e tudo bem! O time de G&C vai <strong>ouvir os áudios</strong> diretamente. 🎧</p>
       </div>
-      <p style={{ color: '#475569', marginBottom: '24px', lineHeight: '1.6', fontSize: '14px' }}>Use <strong>Google Chrome</strong> no computador para melhor experiência. Certifique-se de estar em um ambiente silencioso.</p>
+      <p style={{ color: '#475569', marginBottom: '24px', lineHeight: '1.6', fontSize: '14px' }}>Use <strong>Google Chrome</strong> no computador. Certifique-se de estar em um ambiente silencioso.</p>
       <input style={S.inp} placeholder="Seu nome completo" value={nome} onChange={e => setNome(e.target.value)} onKeyDown={e => e.key === 'Enter' && nome.trim() && setIniciado(true)} />
       <button style={{ ...S.btn, opacity: nome.trim() ? 1 : .5 }} onClick={() => nome.trim() && setIniciado(true)}>Começar →</button>
     </div></div>
   )
 
-  const temAudio = !!audioBlob, danger = gravando && tempoRestante <= 30
+  const temAudio = !!audioBlob
+  const danger = gravando && tempoRestante <= 30
   const isUltima = pergAtual + 1 === config.perguntas.length
 
   return (
@@ -390,7 +474,7 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       <div style={S.bar}><div style={S.barIn((pergAtual / config.perguntas.length) * 100)} /></div>
       <div style={S.qbox}><p style={{ margin: 0, fontSize: '17px', fontWeight: '600', color: '#1e293b', lineHeight: '1.5' }}>{config.perguntas[pergAtual]}</p></div>
       <div style={{ background: '#fffbeb', borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', borderLeft: '3px solid #f59e0b' }}>
-        <p style={{ margin: 0, fontSize: '12px', color: '#92400e', lineHeight: '1.6' }}>💡 <strong>Dica:</strong> grave em um local silencioso, fale próximo ao microfone e acompanhe a transcrição aparecendo na tela — se não aparecer nada enquanto fala, pause e verifique se o microfone está ativo.</p>
+        <p style={{ margin: 0, fontSize: '12px', color: '#92400e', lineHeight: '1.6' }}>💡 <strong>Dica:</strong> grave em local silencioso e fale próximo ao microfone.</p>
       </div>
       {(gravando || temAudio) && (
         <div style={S.timer(danger)}>
@@ -401,7 +485,7 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       {temAudio && !gravando && (
         <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
           <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: '600', color: '#475569' }}>🔊 Ouça sua resposta:</p>
-          <audio controls src={audioUrl} style={S.audio} />
+          <audio controls src={audioUrl} style={{ width: '100%', borderRadius: '8px', marginTop: '4px' }} />
           {transcricao && (<details style={{ marginTop: '12px' }}><summary style={{ fontSize: '13px', color: '#7c3aed', cursor: 'pointer' }}>Ver transcrição automática</summary><p style={{ margin: '8px 0 0', fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>{transcricao}</p></details>)}
         </div>
       )}
@@ -411,26 +495,15 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
         </div>
       )}
       <div style={S.row}>
-        {!gravando && pergAtual > 0 && (
-          <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569' }} onClick={voltar}>← Voltar</button>
-        )}
-        {!gravando && !temAudio && (
-          <button style={{ ...S.btn, marginTop: 0, flex: 1 }} onClick={iniciarGravacao}>🎙 Gravar resposta</button>
-        )}
-        {gravando && (
-          <button style={{ ...S.btnSm, background: '#dc2626', color: 'white', flex: 1 }} onClick={pararGravacao}>⏹ Parar gravação</button>
-        )}
+        {!gravando && pergAtual > 0 && <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569' }} onClick={voltar}>← Voltar</button>}
+        {!gravando && !temAudio && <button style={{ ...S.btn, marginTop: 0, flex: 1 }} onClick={iniciarGravacao}>🎙 Gravar resposta</button>}
+        {gravando && <button style={{ ...S.btnSm, background: '#dc2626', color: 'white', flex: 1 }} onClick={pararGravacao}>⏹ Parar gravação</button>}
         {temAudio && !gravando && (<>
-          <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569' }} onClick={regravar}>🔄 Regravar</button>
-          <button style={{ ...S.btn, marginTop: 0, flex: 1 }} onClick={avancar}>
-            {isUltima ? 'Revisar respostas →' : 'Próxima →'}
-          </button>
+          <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569' }} onClick={limparEstado}>🔄 Regravar</button>
+          <button style={{ ...S.btn, marginTop: 0, flex: 1 }} onClick={avancar}>{isUltima ? 'Revisar →' : 'Próxima →'}</button>
         </>)}
-        {temAudio && !gravando && !transcricao && (
-          <p style={{ width: '100%', margin: '8px 0 0', fontSize: '12px', color: '#dc2626', textAlign: 'center' }}>⚠️ Transcrição não capturada — considere regravar em local mais silencioso ou verificar o microfone.</p>
-        )}
       </div>
-    </div><style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.3 } }`}</style></div>
+    </div><style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}`}</style></div>
   )
 }
 
@@ -441,14 +514,15 @@ function Painel({ onVoltar, apiKey }) {
   const [auth, setAuth] = useState(false)
   const [candidatos, setCandidatos] = useState([])
   const [exp, setExp] = useState(null)
-  const [audiosCarregados, setAudiosCarregados] = useState({})
-  const [carregandoAudio, setCarregandoAudio] = useState(null)
+  const [filtroVaga, setFiltroVaga] = useState("todos")
   const [filtroStatus, setFiltroStatus] = useState("todos")
-  const [abaAtiva, setAbaAtiva] = useState("triagem") // 'triagem' | 'aprovados' | 'reprovados'
+  const [abaAtiva, setAbaAtiva] = useState("triagem")
   const [carregando, setCarregando] = useState(false)
   const [reavaliando, setReavaliando] = useState(null)
   const [passando, setPassando] = useState(null)
   const [reprovando, setReprovando] = useState(null)
+  const [audiosCarregados, setAudiosCarregados] = useState({})
+  const [carregandoAudio, setCarregandoAudio] = useState(null)
 
   const carregarCandidatos = async () => {
     setCarregando(true)
@@ -477,9 +551,8 @@ function Painel({ onVoltar, apiKey }) {
       for (const p of perguntas) {
         const meta = docs[`pergunta-${p}`]
         if (!meta) continue
-        if (meta.audioBase64) {
-          a[p] = meta.audioBase64
-        } else if (meta.totalChunks > 1) {
+        if (meta.audioBase64) { a[p] = meta.audioBase64 }
+        else if (meta.totalChunks > 1) {
           const parts = []
           for (let c2 = 0; c2 < meta.totalChunks; c2++) {
             const chunkDoc = docs[`pergunta-${p}-chunk-${c2}`]
@@ -517,18 +590,9 @@ function Painel({ onVoltar, apiKey }) {
     setPassando(null)
   }
 
-  const voltarParaTriagem = async (c, e) => {
-    e.stopPropagation()
-    try {
-      await updateDoc(doc(db, c.colecao, c.id), { etapa: 'triagem' })
-      setCandidatos(prev => prev.map(x => x.id === c.id ? { ...x, etapa: 'triagem' } : x))
-      setExp(null)
-    } catch (err) { alert("Erro: " + err.message) }
-  }
-
   const reprovar = async (c, e) => {
     e.stopPropagation()
-    if (!confirm(`Reprovar ${c.nome}? Ele(a) vai para a aba Reprovados.`)) return
+    if (!confirm(`Reprovar ${c.nome}?`)) return
     setReprovando(c.id)
     try {
       await updateDoc(doc(db, c.colecao, c.id), { etapa: 'reprovado', dataReprovacao: new Date().toLocaleDateString("pt-BR") })
@@ -538,21 +602,30 @@ function Painel({ onVoltar, apiKey }) {
     setReprovando(null)
   }
 
-  useEffect(() => { if (auth) carregarCandidatos() }, [auth])
-
-  const expandir = (i, c) => { if (exp === i) { setExp(null) } else { setExp(i); carregarAudios(c) } }
+  const voltarParaTriagem = async (c, e) => {
+    e.stopPropagation()
+    try {
+      await updateDoc(doc(db, c.colecao, c.id), { etapa: 'triagem' })
+      setCandidatos(prev => prev.map(x => x.id === c.id ? { ...x, etapa: 'triagem' } : x))
+      setExp(null)
+    } catch (err) { alert("Erro: " + err.message) }
+  }
 
   const deletar = async (c, e) => {
     e.stopPropagation()
     if (!confirm(`Apagar ${c.nome}?`)) return
     try {
       const aSnap = await getDocs(collection(db, c.colecao, c.id, "audios"))
-      for (const ad of aSnap.docs) { await deleteDoc(doc(db, c.colecao, c.id, "audios", ad.id)) }
+      for (const ad of aSnap.docs) await deleteDoc(doc(db, c.colecao, c.id, "audios", ad.id))
       await deleteDoc(doc(db, c.colecao, c.id))
       setCandidatos(prev => prev.filter(x => x.id !== c.id))
       setAudiosCarregados(prev => { const n = { ...prev }; delete n[c.id]; return n })
     } catch (e) { alert("Erro: " + e.message) }
   }
+
+  useEffect(() => { if (auth) carregarCandidatos() }, [auth])
+
+  const expandir = (i, c) => { if (exp === i) { setExp(null) } else { setExp(i); carregarAudios(c) } }
 
   const sP = {
     page: { minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui,sans-serif', padding: '32px 20px' },
@@ -564,8 +637,9 @@ function Painel({ onVoltar, apiKey }) {
     btnRoxo: { background: '#ede9fe', color: '#7c3aed', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
     out: { background: 'white', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
     inp: { width: '100%', padding: '12px 16px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '16px', boxSizing: 'border-box', outline: 'none', marginBottom: '16px' },
-    vb: { display: 'inline-block', background: '#ede9fe', color: '#7c3aed', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' },
-    abaBotao: (ativa) => ({ background: ativa ? '#7c3aed' : 'white', color: ativa ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' })
+    vagaBadge: (vaga) => ({ display: 'inline-block', background: vaga === 'csm-senior' ? '#ede9fe' : vaga === 'salesops' ? '#fef9c3' : '#fce7f3', color: vaga === 'csm-senior' ? '#7c3aed' : vaga === 'salesops' ? '#92400e' : '#9d174d', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }),
+    abaBotao: (ativa) => ({ background: ativa ? '#7c3aed' : 'white', color: ativa ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }),
+    filtroBotao: (ativo) => ({ background: ativo ? '#7c3aed' : 'white', color: ativo ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' })
   }
 
   if (!auth) return (
@@ -585,6 +659,7 @@ function Painel({ onVoltar, apiKey }) {
   const reprovados = candidatos.filter(x => x.etapa === 'reprovado')
 
   let listaAtiva = abaAtiva === 'triagem' ? emTriagem : abaAtiva === 'aprovados' ? aprovados : reprovados
+  if (filtroVaga !== "todos") listaAtiva = listaAtiva.filter(x => x.vaga === filtroVaga)
   if (abaAtiva === 'triagem' && filtroStatus !== "todos") {
     listaAtiva = listaAtiva.filter(x => x.avaliacao?.classificacao?.includes(
       filtroStatus === "avanca" ? "Avança" : filtroStatus === "talvez" ? "Talvez" : "Não avança"
@@ -593,7 +668,6 @@ function Painel({ onVoltar, apiKey }) {
 
   return (
     <div style={sP.page}>
-      {/* Header */}
       <div style={{ maxWidth: '900px', margin: '0 auto 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>Painel G&C — Entrevistas por Áudio</h1>
@@ -605,30 +679,25 @@ function Painel({ onVoltar, apiKey }) {
         </div>
       </div>
 
-      {/* Abas */}
-      <div style={{ maxWidth: '900px', margin: '0 auto 20px', display: 'flex', gap: '8px' }}>
-        <button style={sP.abaBotao(abaAtiva === 'triagem')} onClick={() => { setAbaAtiva('triagem'); setExp(null) }}>
-          📋 Triagem ({emTriagem.length})
-        </button>
-        <button style={sP.abaBotao(abaAtiva === 'aprovados')} onClick={() => { setAbaAtiva('aprovados'); setExp(null) }}>
-          ✅ Aprovados ({aprovados.length})
-        </button>
-        <button style={sP.abaBotao(abaAtiva === 'reprovados')} onClick={() => { setAbaAtiva('reprovados'); setExp(null) }}>
-          ❌ Reprovados ({reprovados.length})
-        </button>
+      <div style={{ maxWidth: '900px', margin: '0 auto 16px', display: 'flex', gap: '8px' }}>
+        <button style={sP.abaBotao(abaAtiva === 'triagem')} onClick={() => { setAbaAtiva('triagem'); setExp(null) }}>📋 Triagem ({emTriagem.length})</button>
+        <button style={sP.abaBotao(abaAtiva === 'aprovados')} onClick={() => { setAbaAtiva('aprovados'); setExp(null) }}>✅ Aprovados ({aprovados.length})</button>
+        <button style={sP.abaBotao(abaAtiva === 'reprovados')} onClick={() => { setAbaAtiva('reprovados'); setExp(null) }}>❌ Reprovados ({reprovados.length})</button>
       </div>
 
-      {/* Filtros — só na aba triagem */}
-      {abaAtiva === 'triagem' && (
-        <div style={{ maxWidth: '900px', margin: '0 auto 20px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: '13px', color: '#64748b', marginRight: '4px' }}>IA:</span>
+      <div style={{ maxWidth: '900px', margin: '0 auto 20px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: '13px', color: '#64748b' }}>Vaga:</span>
+        {[["todos", "Todas"], ["csm-senior", "CSM Sênior"], ["salesops", "Sales Ops"], ["copywriter-sr", "Copywriter Sr."]].map(([v, l]) => (
+          <button key={v} onClick={() => setFiltroVaga(v)} style={sP.filtroBotao(filtroVaga === v)}>{l}</button>
+        ))}
+        {abaAtiva === 'triagem' && (<>
+          <span style={{ fontSize: '13px', color: '#64748b', marginLeft: '8px' }}>IA:</span>
           {[["todos", "Todos"], ["avanca", "✅ Avança"], ["talvez", "🟡 Talvez"], ["nao", "❌ Não avança"]].map(([v, l]) => (
-            <button key={v} onClick={() => setFiltroStatus(v)} style={{ ...sP.btn, background: filtroStatus === v ? '#7c3aed' : 'white', color: filtroStatus === v ? 'white' : '#475569', border: '1px solid #e2e8f0', padding: '6px 14px', fontSize: '13px' }}>{l}</button>
+            <button key={v} onClick={() => setFiltroStatus(v)} style={sP.filtroBotao(filtroStatus === v)}>{l}</button>
           ))}
-        </div>
-      )}
+        </>)}
+      </div>
 
-      {/* Lista */}
       {listaAtiva.length === 0 && (
         <div style={{ background: 'white', borderRadius: '12px', padding: '40px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', color: '#64748b' }}>
           {abaAtiva === 'aprovados' ? 'Nenhum candidato aprovado ainda.' : abaAtiva === 'reprovados' ? 'Nenhum candidato reprovado.' : 'Nenhum candidato nessa categoria.'}
@@ -643,103 +712,70 @@ function Painel({ onVoltar, apiKey }) {
 
         return (
           <div key={x.id} style={sP.card} onClick={() => expandir(i, x)}>
-            {/* Linha principal do card */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: '16px' }}>{x.nome}</strong>
-                <span style={sP.vb}>CSM Sênior</span>
+                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'salesops' ? 'Sales Ops' : 'Copywriter Sr.'}</span>
                 <span style={{ color: '#94a3b8', fontSize: '13px' }}>{x.data}</span>
-                {x.etapa === 'aprovado' && (
-                  <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>
-                    ✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}
-                  </span>
-                )}
-                {x.etapa === 'reprovado' && (
-                  <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>
-                    ❌ Reprovado {x.dataReprovacao ? `em ${x.dataReprovacao}` : ''}
-                  </span>
-                )}
+                {x.etapa === 'aprovado' && <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}</span>}
+                {x.etapa === 'reprovado' && <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>❌ Reprovado {x.dataReprovacao ? `em ${x.dataReprovacao}` : ''}</span>}
               </div>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <span style={S.sc(x.avaliacao?.score ?? 0)}>{x.avaliacao?.score != null ? `${x.avaliacao.score}/100` : '🎧 ouvir'}</span>
                 <span style={{ fontSize: '18px' }}>{x.avaliacao?.classificacao?.split(' ')[0]}</span>
-                <button onClick={(e) => deletar(x, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: '#dc2626', padding: '4px' }} title="Apagar">🗑</button>
+                <button onClick={(e) => deletar(x, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: '#dc2626', padding: '4px' }}>🗑</button>
               </div>
             </div>
 
-            {/* Conteúdo expandido */}
             {exp === i && (
               <div style={{ marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '20px' }}>
-                {/* Botões de ação */}
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
-                  <button
-                    style={{ ...sP.btnRoxo, opacity: estaReavaliando ? 0.6 : 1 }}
-                    onClick={(e) => reavaliar(x, e)}
-                    disabled={estaReavaliando}
-                  >
+                  <button style={{ ...sP.btnRoxo, opacity: estaReavaliando ? 0.6 : 1 }} onClick={(e) => reavaliar(x, e)} disabled={estaReavaliando}>
                     {estaReavaliando ? '⏳ Reavaliando...' : '🤖 Reavaliar com IA'}
                   </button>
-
                   {x.etapa !== 'aprovado' && x.etapa !== 'reprovado' && (<>
-                    <button
-                      style={{ ...sP.btnVerde, opacity: estaPassando ? 0.6 : 1 }}
-                      onClick={(e) => passarProximaEtapa(x, e)}
-                      disabled={estaPassando}
-                    >
+                    <button style={{ ...sP.btnVerde, opacity: estaPassando ? 0.6 : 1 }} onClick={(e) => passarProximaEtapa(x, e)} disabled={estaPassando}>
                       {estaPassando ? '⏳ Salvando...' : '✅ Passar pra próxima etapa'}
                     </button>
-                    <button
-                      style={{ ...sP.btnVermelho, opacity: reprovando === x.id ? 0.6 : 1 }}
-                      onClick={(e) => reprovar(x, e)}
-                      disabled={reprovando === x.id}
-                    >
+                    <button style={{ ...sP.btnVermelho, opacity: reprovando === x.id ? 0.6 : 1 }} onClick={(e) => reprovar(x, e)} disabled={reprovando === x.id}>
                       {reprovando === x.id ? '⏳ Salvando...' : '❌ Reprovar'}
                     </button>
                   </>)}
-
                   {(x.etapa === 'aprovado' || x.etapa === 'reprovado') && (
-                    <button style={sP.btnCinza} onClick={(e) => voltarParaTriagem(x, e)}>
-                      ↩ Voltar pra triagem
-                    </button>
+                    <button style={sP.btnCinza} onClick={(e) => voltarParaTriagem(x, e)}>↩ Voltar pra triagem</button>
                   )}
                 </div>
 
-                {/* Avaliação IA */}
                 <p style={{ color: '#475569', fontSize: '14px', marginBottom: '12px', fontStyle: 'italic' }}>{x.avaliacao?.resumo}</p>
                 {x.avaliacao?.pontos_fortes?.length > 0 && (
                   <div style={{ marginBottom: '12px' }}>
                     <strong style={{ fontSize: '13px', color: '#16a34a' }}>✅ Pontos fortes</strong>
-                    <ul style={{ margin: '8px 0 0', paddingLeft: '20px' }}>
-                      {x.avaliacao.pontos_fortes.map((p, j) => <li key={j} style={{ fontSize: '13px', color: '#475569' }}>{p}</li>)}
-                    </ul>
+                    <ul style={{ margin: '8px 0 0', paddingLeft: '20px' }}>{x.avaliacao.pontos_fortes.map((p, j) => <li key={j} style={{ fontSize: '13px', color: '#475569' }}>{p}</li>)}</ul>
                   </div>
                 )}
                 {x.avaliacao?.alertas?.length > 0 && (
                   <div style={{ marginBottom: '16px' }}>
                     <strong style={{ fontSize: '13px', color: '#dc2626' }}>⚠️ Alertas</strong>
-                    <ul style={{ margin: '8px 0 0', paddingLeft: '20px' }}>
-                      {x.avaliacao.alertas.map((a, j) => <li key={j} style={{ fontSize: '13px', color: '#475569' }}>{a}</li>)}
-                    </ul>
+                    <ul style={{ margin: '8px 0 0', paddingLeft: '20px' }}>{x.avaliacao.alertas.map((a, j) => <li key={j} style={{ fontSize: '13px', color: '#475569' }}>{a}</li>)}</ul>
                   </div>
                 )}
 
-                {/* Áudios */}
                 <strong style={{ fontSize: '13px', color: '#475569' }}>Respostas</strong>
                 {carregandoAudio === x.id && <p style={{ fontSize: '13px', color: '#7c3aed', marginTop: '8px' }}>Carregando áudios...</p>}
                 {x.respostas?.map((r, j) => (
                   <div key={j} style={{ marginTop: '12px', background: '#f8fafc', borderRadius: '8px', padding: '16px' }}>
-                    <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>P{j + 1}: {vc.perguntas[j] || 'Pergunta não disponível'}</p>
+                    <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>P{j + 1}: {vc.perguntas[j]}</p>
                     {aud[j]
-                      ? <div style={{ marginBottom: '8px' }} onClick={e => e.stopPropagation()}><audio controls src={aud[j]} style={{ width: '100%', height: '36px' }} /></div>
+                      ? <div onClick={e => e.stopPropagation()}><audio controls src={aud[j]} style={{ width: '100%', height: '36px' }} /></div>
                       : x.errosAudio?.includes(j + 1)
-                        ? <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#dc2626' }}>⚠️ Áudio não salvo — erro no envio</p>
+                        ? <p style={{ fontSize: '12px', color: '#dc2626', margin: 0 }}>⚠️ Áudio não salvo</p>
                         : carregandoAudio !== x.id
-                          ? <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#94a3b8' }}>Áudio não disponível</p>
+                          ? <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>Áudio não disponível</p>
                           : null
                     }
-                    {r.duracao != null && <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#7c3aed' }}>⏱ Duração: {formatarTempo(r.duracao)}</p>}
+                    {r.duracao != null && <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#7c3aed' }}>⏱ {formatarTempo(r.duracao)}</p>}
                     {r.transcricao && (
-                      <details onClick={e => e.stopPropagation()}>
+                      <details onClick={e => e.stopPropagation()} style={{ marginTop: '8px' }}>
                         <summary style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>Ver transcrição</summary>
                         <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#1e293b', lineHeight: '1.5' }}>{r.transcricao}</p>
                       </details>
@@ -760,12 +796,13 @@ function Painel({ onVoltar, apiKey }) {
 export default function App() {
   const [tela, setTela] = useState("candidato")
   const apiKey = import.meta.env.VITE_ANTHROPIC_KEY || ""
+  const vagaId = getVagaFromUrl()
 
   if (tela === "painel") return <Painel onVoltar={() => setTela("candidato")} apiKey={apiKey} />
 
   return (
     <div style={{ position: "relative" }}>
-      <TelaCandidato apiKey={apiKey} vagaId="csm-senior" onFinalizar={() => {}} />
+      {vagaId ? <TelaCandidato apiKey={apiKey} vagaId={vagaId} onFinalizar={() => {}} /> : <TelaLinkInvalido />}
       <button onClick={() => setTela("painel")} style={{ position: "fixed", bottom: "16px", right: "16px", background: "#1e293b", color: "white", border: "none", borderRadius: "8px", padding: "10px 18px", fontSize: "13px", fontWeight: "600", cursor: "pointer", zIndex: 100, boxShadow: "0 4px 12px rgba(0,0,0,.3)" }}>🔒 Painel G&C</button>
     </div>
   )
