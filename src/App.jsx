@@ -71,20 +71,36 @@ async function avaliarRespostas(apiKey, nome, vaga, respostas) {
     }
   }
 
-  const prompt = `Você é um recrutador especialista da Curseduca, uma EdTech brasileira em crescimento.
-Avalie as respostas (transcritas de áudio) do candidato "${nome}" para a vaga de ${config.titulo}.
+  const prompt = `Você é um recrutador sênior da Curseduca avaliando candidatos para uma vaga exigente de Customer Success Manager Sênior B2B. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem.
 
-${respostas.map((r, i) => `Pergunta ${i + 1}: ${config.perguntas[i]}\nResposta (transcrição do áudio): ${r.transcricao && r.transcricao.trim().length > 10 ? r.transcricao : '[transcrição não capturada]'}\n`).join('\n')}
+Candidato: "${nome}"
+
+${respostas.map((r, i) => `Pergunta ${i + 1}: ${config.perguntas[i]}\nResposta: ${r.transcricao && r.transcricao.trim().length > 10 ? r.transcricao : '[transcrição não capturada]'}\n`).join('\n')}
 
 ${config.criterios}
 
-INSTRUÇÕES IMPORTANTES:
-- As transcrições são geradas automaticamente a partir de áudio e podem conter erros de pontuação, palavras trocadas, frases incompletas ou falta de paragrafação. Ignore completamente problemas de forma e foco 100% no conteúdo e no raciocínio demonstrado.
-- Respostas longas ou detalhadas NÃO devem ser penalizadas. O candidato está falando, não escrevendo — é natural que o discurso oral seja mais extenso. Só sinalize verbosidade se a resposta for completamente circular, sem nenhum conteúdo relevante após múltiplas tentativas de responder.
-- Se uma transcrição estiver marcada como '[transcrição não capturada]', não penalize o candidato — registre nos alertas que o áudio deve ser ouvido manualmente para essa pergunta.
-- Avalie com base no que foi dito, mesmo que a transcrição seja imperfeita. Uma resposta com boa substância mas transcrição truncada ainda deve receber nota justa.
-- Só classifique como ❌ Não avança se houver evidência clara de inadequação no conteúdo — nunca por ausência de transcrição ou por extensão da resposta.
-- Nos alertas, foque em gaps de conteúdo reais: ausência de métricas, respostas genéricas sem exemplos concretos, foco em processo em vez de resultado, comportamento reativo em vez de proativo.
+REGRAS DE AVALIAÇÃO DE CONTEÚDO (aplique com rigor):
+- Exija exemplos concretos e específicos. Respostas genéricas como "eu sempre acompanho os clientes de perto" ou "costumo ser proativo" sem caso real = alerta grave.
+- Exija métricas ou resultados tangíveis quando a pergunta pede. Quem fala só em processo ("fiz reunião", "montei plano de ação") sem resultado mensurável perde pontos significativos.
+- Detecção de churn: exija sinais concretos que o candidato identificou (dados, comportamento, frequência de uso, ticket aberto, etc.) — não aceite "percebi que o cliente estava insatisfeito" sem evidência.
+- Expansão: exija que a oportunidade tenha vindo de um gap real de resultado do cliente, não de uma meta interna. Se soar como upsell disfarçado, aponte.
+- Postura consultiva: exija que o candidato tenha apresentado dado ou argumento sólido ao discordar — não só "dei minha opinião com respeito".
+
+REGRAS DE FORMA (seja tolerante):
+- Transcrições automáticas têm erros de pontuação, palavras trocadas e frases incompletas — ignore completamente. Foque no raciocínio, não na gramática.
+- Respostas longas ou detalhadas são normais em áudio — NÃO penalize extensão. Só registre como alerta se a resposta for completamente circular e vazia após ouvir tudo.
+- Se uma transcrição estiver '[transcrição não capturada]', não penalize — registre que o áudio precisa ser ouvido manualmente.
+
+CALIBRAÇÃO DE SCORE:
+- 80-100: demonstrou todos os critérios com exemplos concretos e métricas. Raro.
+- 65-79: demonstrou a maioria dos critérios com substância, mas faltou profundidade em 1-2 pontos.
+- 50-64: demonstrou alguns critérios mas com respostas genéricas ou sem métricas na maior parte.
+- abaixo de 50: respostas majoritariamente genéricas, sem exemplos reais, ou sem aderência ao perfil sênior B2B.
+
+CLASSIFICAÇÃO:
+- ✅ Avança: score ≥ 72 E demonstrou pelo menos 3 dos 4 critérios com substância real.
+- 🟡 Talvez: score entre 58-71, ou score ≥ 72 mas com gap importante em critério essencial.
+- ❌ Não avança: score < 58, ou respostas predominantemente genéricas independente do score.
 
 Responda APENAS em JSON válido:
 {"score":<0-100>,"classificacao":"<✅ Avança | 🟡 Talvez | ❌ Não avança>","pontos_fortes":["..."],"alertas":["..."],"resumo":"<2 frases>"}`
