@@ -85,7 +85,7 @@ CLASSIFICAÇÃO:
 - ✅ Avança: score ≥ 72 E demonstrou pelo menos 3 dos 4 critérios com substância real.
 - 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial.
 - ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.`
-  }
+  },
 
   'copywriter-sr': {
     titulo: 'Copywriter Sênior',
