@@ -168,6 +168,48 @@ CLASSIFICAÇÃO:
   }
 }
 
+  'ae-b2b': {
+    titulo: 'Account Executive B2B',
+    colecao: 'candidatos-ae-b2b',
+    perguntas: [
+      "Conte sobre uma venda B2B complexa que você conduziu do zero até o fechamento. Quem eram os decisores envolvidos, qual era o ticket e quanto tempo durou o ciclo?",
+      "Como você estrutura sua abordagem quando entra em uma conta nova? Me explica o seu processo desde o mapeamento até o primeiro contato com o decisor.",
+      "Me fala sobre uma negociação que travou ou que você quase perdeu. O que aconteceu e como você conduziu a retomada?"
+    ],
+    promptSistema: `Você é um recrutador sênior da Curseduca avaliando candidatos para a vaga de Account Executive B2B. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem.
+
+Contexto da vaga: modelo ABM (Account Based Marketing), ciclo de 60 a 180 dias, ticket entre R$10k e R$100k MRR, público-alvo são C-Level, Diretores e Heads.
+
+Critérios de avaliação:
+1. Experiência em vendas B2B complexas: ticket acima de R$10k MRR, ciclo longo, múltiplos stakeholders (3 ou mais decisores). Sinal de sênior: descreve o contexto com precisão — quem eram os decisores, qual era o ticket, quanto durou. Sinal de desalinhamento: experiência majoritariamente inbound, SMB ou transacional.
+2. Processo estruturado de prospecção e mapeamento de contas: tem método próprio — não improvisa. Sinal de sênior: descreve etapas claras de mapeamento de conta, identificação de decisores e abordagem inicial. Familiaridade com ABM, seja pelo nome ou pela prática descrita. Sinal de júnior: resposta genérica sem processo definido.
+3. Resiliência e maturidade comercial: consegue conduzir ciclos não lineares — quando a negociação trava, tem estratégia pra retomar. Sinal de sênior: descreve o que travou, o que fez, como conduziu a retomada com dados ou contexto real. Sinal de júnior: resposta vaga, ou o exemplo é de venda simples sem complexidade real.
+4. Comunicação orientada a negócio: fala em valor e impacto pro cliente — não em features do produto. Sinal de sênior: contextualiza a venda pelo problema do cliente e resultado gerado. Sinal de júnior: foco em características do produto ou processo interno sem conectar com valor.
+
+REGRAS DE AVALIAÇÃO DE CONTEÚDO (aplique com rigor):
+- Exija exemplos concretos: ticket, decisores, duração do ciclo, resultado. Respostas sem contexto real = alerta grave.
+- Penalize fortemente experiência exclusivamente inbound, SMB ou transacional — é desalinhamento direto com a vaga.
+- Ausência de processo estruturado de prospecção = alerta significativo.
+- Foco em produto ao invés de valor = penalize.
+
+REGRAS DE FORMA (seja tolerante):
+- Transcrições automáticas têm erros — ignore completamente. Foque no raciocínio, não na gramática.
+- Respostas longas são normais em áudio — NÃO penalize extensão. Só registre alerta se for completamente circular e vazia.
+- Se transcrição estiver '[transcrição não capturada]', não penalize — note que o áudio deve ser ouvido.
+
+CALIBRAÇÃO DE SCORE:
+Score 80+: exemplos concretos com ticket relevante, múltiplos decisores, ciclo longo descrito com precisão, processo de prospecção claro, comunicação orientada a valor. Muito raro.
+Score 65-79: exemplos reais com substância, processo parcialmente descrito, ciclo e decisores mencionados. Perfil promissor.
+Score 50-64: tem experiência comercial mas contexto é SMB ou inbound, ou respostas genéricas sem dados concretos.
+Score abaixo de 50: experiência claramente transacional/inbound, sem processo estruturado, ou respostas sem nenhum exemplo real.
+A maioria cai entre 50 e 72. Reserve abaixo de 50 para quem claramente não tem perfil. Reserve acima de 75 para quem claramente se destacou.
+
+CLASSIFICAÇÃO:
+- ✅ Avança: score ≥ 70 E demonstrou pelo menos 3 dos 4 critérios com substância real.
+- 🟡 Talvez: score entre 55-69, ou score ≥ 70 mas com gap importante em critério essencial.
+- ❌ Não avança: score < 55, ou experiência majoritariamente SMB/inbound/transacional.`
+  },
+
 // ─── UTILITÁRIOS ─────────────────────────────────────────────────────────────
 
 const TEMPO_LIMITE = 300
@@ -536,6 +578,31 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
           <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#7c3aed' }}>⏱ {formatarTempo(r.duracao)}</p>
         </div>
       ))}
+      {(() => {
+        const semTranscricao = respostas.filter(r => !r.transcricao || r.transcricao.trim().length < 10).length
+        if (semTranscricao === respostas.length) return (
+          <div style={{ background: '#fef2f2', borderRadius: '10px', padding: '14px 16px', marginBottom: '12px', borderLeft: '3px solid #dc2626' }}>
+            <p style={{ margin: 0, fontSize: '13px', color: '#dc2626', lineHeight: '1.6' }}>
+              ⚠️ <strong>Nenhuma transcrição foi capturada.</strong> Isso pode indicar que o microfone não estava funcionando corretamente. Recomendamos voltar e regravar as respostas em um local silencioso, com o microfone permitido no Chrome.<br />
+              Se preferir enviar assim mesmo, o time de G&C vai ouvir os áudios diretamente.
+            </p>
+          </div>
+        )
+        if (semTranscricao > 0) return (
+          <div style={{ background: '#fffbeb', borderRadius: '10px', padding: '14px 16px', marginBottom: '12px', borderLeft: '3px solid #f59e0b' }}>
+            <p style={{ margin: 0, fontSize: '13px', color: '#92400e', lineHeight: '1.6' }}>
+              ⚠️ <strong>{semTranscricao} resposta{semTranscricao > 1 ? 's' : ''} sem transcrição.</strong> Antes de enviar, confira os áudios acima e verifique se você consegue se ouvir. Se a gravação ficou boa, pode enviar — o time vai ouvir diretamente.
+            </p>
+          </div>
+        )
+        return (
+          <div style={{ background: '#f0fdf4', borderRadius: '10px', padding: '12px 16px', marginBottom: '12px', borderLeft: '3px solid #16a34a' }}>
+            <p style={{ margin: 0, fontSize: '13px', color: '#15803d', lineHeight: '1.6' }}>
+              ✅ Transcrições capturadas. Ouça os áudios acima para confirmar que ficaram bons antes de enviar.
+            </p>
+          </div>
+        )
+      })()}
       <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
         <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569', flex: 1, padding: '14px' }} onClick={voltarDaRevisao}>← Voltar</button>
         <button style={{ ...S.btn, marginTop: 0, flex: 2 }} onClick={() => finalizarEnvio(respostas)}>Enviar entrevista ✓</button>
@@ -617,9 +684,13 @@ function Painel({ onVoltar, apiKey }) {
   const [auth, setAuth] = useState(false)
   const [candidatos, setCandidatos] = useState([])
   const [exp, setExp] = useState(null)
+  const [telaInicial, setTelaInicial] = useState(true) // true = tela de seleção de vaga
   const [vagaAtiva, setVagaAtiva] = useState("csm-senior")
   const [filtroStatus, setFiltroStatus] = useState("todos")
-  const [abaAtiva, setAbaAtiva] = useState("triagem") // triagem | aprovados | reprovados | links
+  const [abaAtiva, setAbaAtiva] = useState("triagem") // triagem | aprovados | reprovados | links | feedback | encerradas
+  const [vagasFechadas, setVagasFechadas] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('vagas_fechadas') || '[]') } catch { return [] }
+  })
   const [carregando, setCarregando] = useState(false)
   const [reavaliando, setReavaliando] = useState(null)
   const [passando, setPassando] = useState(null)
@@ -751,6 +822,18 @@ function Painel({ onVoltar, apiKey }) {
     }
   }, [auth])
 
+  const fecharVaga = (vagaId) => {
+    const novas = [...vagasFechadas, vagaId]
+    setVagasFechadas(novas)
+    localStorage.setItem('vagas_fechadas', JSON.stringify(novas))
+  }
+
+  const reabrirVaga = (vagaId) => {
+    const novas = vagasFechadas.filter(v => v !== vagaId)
+    setVagasFechadas(novas)
+    localStorage.setItem('vagas_fechadas', JSON.stringify(novas))
+  }
+
   const expandir = (i, c) => { if (exp === i) { setExp(null) } else { setExp(i); carregarAudios(c) } }
 
   const sP = {
@@ -763,7 +846,7 @@ function Painel({ onVoltar, apiKey }) {
     btnRoxo: { background: '#ede9fe', color: '#7c3aed', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
     out: { background: 'white', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
     inp: { width: '100%', padding: '12px 16px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '16px', boxSizing: 'border-box', outline: 'none', marginBottom: '16px' },
-    vagaBadge: (vaga) => ({ display: 'inline-block', background: vaga === 'csm-senior' ? '#ede9fe' : vaga === 'salesops' ? '#fef9c3' : vaga === 'copywriter-sr' ? '#fce7f3' : '#dcfce7', color: vaga === 'csm-senior' ? '#7c3aed' : vaga === 'salesops' ? '#92400e' : vaga === 'copywriter-sr' ? '#9d174d' : '#15803d', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }),
+    vagaBadge: (vaga) => ({ display: 'inline-block', background: vaga === 'csm-senior' ? '#ede9fe' : vaga === 'salesops' ? '#fef9c3' : vaga === 'copywriter-sr' ? '#fce7f3' : vaga === 'head-produto' ? '#dcfce7' : '#fff7ed', color: vaga === 'csm-senior' ? '#7c3aed' : vaga === 'salesops' ? '#92400e' : vaga === 'copywriter-sr' ? '#9d174d' : vaga === 'head-produto' ? '#15803d' : '#c2410c', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }),
     abaBotao: (ativa) => ({ background: ativa ? '#7c3aed' : 'white', color: ativa ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }),
     filtroBotao: (ativo) => ({ background: ativo ? '#7c3aed' : 'white', color: ativo ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' })
   }
@@ -820,15 +903,101 @@ function Painel({ onVoltar, apiKey }) {
     return 0
   })
 
+  // Tela inicial — seleção de vaga
+  if (telaInicial) return (
+    <div style={sP.page}>
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '32px 20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Painel G&C</h1>
+            <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>Selecione uma vaga para ver os candidatos</p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button style={sP.btn} onClick={carregarCandidatos} disabled={carregando}>{carregando ? "Carregando..." : "🔄 Atualizar"}</button>
+            {totalNovos > 0 && <span style={{ background: '#dc2626', color: 'white', borderRadius: '99px', padding: '6px 12px', fontSize: '13px', fontWeight: '700', display: 'flex', alignItems: 'center' }}>🔴 {totalNovos} novo{totalNovos > 1 ? 's' : ''}</span>}
+          </div>
+        </div>
+
+        <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Vagas ativas</h2>
+        <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
+          {[
+            ['csm-senior', 'Customer Success Manager Sênior', '#ede9fe', '#7c3aed'],
+            ['salesops', 'Sales Operations', '#fef9c3', '#92400e'],
+            ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
+            ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
+            ['ae-b2b', 'Account Executive B2B', '#fff7ed', '#c2410c'],
+          ].filter(([v]) => !vagasFechadas.includes(v)).map(([v, l, bg, cor]) => {
+            const total = candidatos.filter(x => x.vaga === v).length
+            const emTriagemV = candidatos.filter(x => x.vaga === v && (!x.etapa || x.etapa === 'triagem')).length
+            const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
+            const novosV = candidatos.filter(x => x.vaga === v && isNovo(x)).length
+            return (
+              <div key={v} style={{ background: 'white', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,.08)', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <span style={{ background: bg, color: cor, borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: '700', whiteSpace: 'nowrap' }}>{l}</span>
+                <div style={{ flex: 1, display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '13px', color: '#64748b' }}>{emTriagemV} em triagem</span>
+                  <span style={{ fontSize: '13px', color: '#16a34a' }}>{aprovadosV} aprovado{aprovadosV !== 1 ? 's' : ''}</span>
+                  {novosV > 0 && <span style={{ background: '#dc2626', color: 'white', borderRadius: '99px', padding: '1px 8px', fontSize: '12px', fontWeight: '700' }}>🔴 {novosV} novo{novosV > 1 ? 's' : ''}</span>}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => { setVagaAtiva(v); setTelaInicial(false); setAbaAtiva('triagem'); setExp(null); setFiltroStatus('todos') }}
+                    style={{ ...sP.btn, marginTop: 0, padding: '8px 18px', fontSize: '13px', width: 'auto' }}>Ver candidatos →</button>
+                  <button onClick={() => { if(confirm('Fechar a vaga ' + l + '? Os dados ficam salvos e você pode reabrir depois.')) fecharVaga(v) }}
+                    style={{ background: 'white', color: '#94a3b8', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>Encerrar</button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {vagasFechadas.length > 0 && (<>
+          <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Vagas encerradas</h2>
+          <div style={{ display: 'grid', gap: '8px', marginBottom: '32px' }}>
+            {[
+              ['csm-senior', 'Customer Success Manager Sênior', '#f1f5f9', '#94a3b8'],
+              ['salesops', 'Sales Operations', '#f1f5f9', '#94a3b8'],
+              ['copywriter-sr', 'Copywriter Sênior', '#f1f5f9', '#94a3b8'],
+              ['head-produto', 'Head de Produto', '#f1f5f9', '#94a3b8'],
+              ['ae-b2b', 'Account Executive B2B', '#f1f5f9', '#94a3b8'],
+            ].filter(([v]) => vagasFechadas.includes(v)).map(([v, l, bg, cor]) => {
+              const total = candidatos.filter(x => x.vaga === v).length
+              const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
+              return (
+                <div key={v} style={{ background: '#f8fafc', borderRadius: '10px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', border: '1px solid #e2e8f0' }}>
+                  <span style={{ background: bg, color: cor, borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: '600' }}>{l}</span>
+                  <span style={{ fontSize: '13px', color: '#94a3b8', flex: 1 }}>{total} candidato{total !== 1 ? 's' : ''} · {aprovadosV} aprovado{aprovadosV !== 1 ? 's' : ''}</span>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => { setVagaAtiva(v); setTelaInicial(false); setAbaAtiva('triagem'); setExp(null) }}
+                      style={{ background: 'white', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', cursor: 'pointer' }}>Ver resultados</button>
+                    <button onClick={() => reabrirVaga(v)}
+                      style={{ background: 'white', color: '#7c3aed', border: '1px solid #7c3aed', borderRadius: '8px', padding: '6px 14px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>Reabrir</button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>)}
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={() => setAbaAtiva('links') || setTelaInicial(false)} style={{ ...sP.out, fontSize: '13px', padding: '8px 16px' }}>🔗 Links das vagas</button>
+          <button onClick={() => { setAbaAtiva('feedback'); setTelaInicial(false); carregarFeedbacks() }} style={{ ...sP.out, fontSize: '13px', padding: '8px 16px' }}>💬 Feedbacks</button>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div style={sP.page}>
       {/* Header */}
       <div style={{ maxWidth: '900px', margin: '0 auto 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>Painel G&C — Entrevistas por Áudio</h1>
-        {totalNovos > 0 && <p style={{ color: '#64748b', fontSize: '13px', marginTop: '4px' }}><span style={{ background: '#dc2626', color: 'white', borderRadius: '99px', padding: '1px 8px', fontSize: '11px', fontWeight: '700', marginRight: '6px' }}>🔴 {totalNovos} novo{totalNovos > 1 ? 's' : ''}</span>desde seu último acesso</p>}
+        <div>
+          <button onClick={() => setTelaInicial(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: '13px', cursor: 'pointer', padding: '0 0 4px', fontWeight: '600' }}>← Todas as vagas</button>
+          <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a', margin: 0 }}>{VAGAS[vagaAtiva]?.titulo}</h1>
+          {totalNovos > 0 && <span style={{ background: '#dc2626', color: 'white', borderRadius: '99px', padding: '1px 8px', fontSize: '11px', fontWeight: '700', marginTop: '4px', display: 'inline-block' }}>🔴 {totalNovos} novo{totalNovos > 1 ? 's' : ''}</span>}
+        </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button style={sP.btn} onClick={carregarCandidatos} disabled={carregando}>{carregando ? "Carregando..." : "🔄 Atualizar"}</button>
-          <button style={sP.out} onClick={onVoltar}>← Voltar</button>
+          <button style={sP.out} onClick={onVoltar}>← Sair</button>
         </div>
       </div>
 
@@ -839,7 +1008,8 @@ function Painel({ onVoltar, apiKey }) {
           ['salesops', 'Sales Ops'],
           ['copywriter-sr', 'Copywriter Sr.'],
           ['head-produto', 'Head de Produto'],
-        ].map(([v, l]) => {
+          ['ae-b2b', 'AE B2B'],
+        ].filter(([v]) => !vagasFechadas.includes(v)).map(([v, l]) => {
           const novosNaVaga = candidatos.filter(x => x.vaga === v && isNovo(x)).length
           return (
             <button key={v} onClick={() => { setVagaAtiva(v); setAbaAtiva('triagem'); setExp(null); setFiltroStatus('todos') }}
@@ -905,7 +1075,7 @@ function Painel({ onVoltar, apiKey }) {
                   </span>
                   {f.conforto && <span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: '99px', padding: '2px 10px', fontSize: '12px', fontWeight: '600' }}>{f.conforto}</span>}
                   <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: 'auto' }}>
-                    {f.vaga === 'csm-senior' ? 'CSM Sênior' : f.vaga === 'salesops' ? 'Sales Ops' : f.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : f.vaga === 'head-produto' ? 'Head de Produto' : f.vaga} · {f.data}
+                    {f.vaga === 'csm-senior' ? 'CSM Sênior' : f.vaga === 'salesops' ? 'Sales Ops' : f.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : f.vaga === 'head-produto' ? 'Head de Produto' : f.vaga === 'ae-b2b' ? 'AE B2B' : f.vaga} · {f.data}
                   </span>
                 </div>
                 {f.comentario && <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6', fontStyle: 'italic' }}>"{f.comentario}"</p>}
@@ -926,6 +1096,7 @@ function Painel({ onVoltar, apiKey }) {
               ['salesops', 'Sales Operations', '#fef9c3', '#92400e'],
               ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
               ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
+              ['ae-b2b', 'Account Executive B2B', '#fff7ed', '#c2410c'],
             ].map(([id, titulo, bg, cor]) => {
               const url = `${window.location.origin}/?vaga=${id}`
               return (
@@ -963,7 +1134,7 @@ function Painel({ onVoltar, apiKey }) {
                 {isNovo(x) && (
                   <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} title="Novo" />
                 )}
-                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : 'Head de Produto'}</span>
+                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : x.vaga === 'head-produto' ? 'Head de Produto' : 'AE B2B'}</span>
                 <span style={{ color: '#94a3b8', fontSize: '13px' }}>{x.data}</span>
                 {x.etapa === 'aprovado' && <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}</span>}
                 {x.etapa === 'reprovado' && <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>❌ Reprovado {x.dataReprovacao ? `em ${x.dataReprovacao}` : ''}</span>}
