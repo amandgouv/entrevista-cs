@@ -165,8 +165,7 @@ CLASSIFICAÇÃO:
 - ✅ Avança: score ≥ 72 E demonstrou pelo menos 2 dos 3 critérios de conteúdo com substância real.
 - 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial.
 - ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.`
-  }
-}
+  },
 
   'ae-b2b': {
     titulo: 'Account Executive B2B',
@@ -208,7 +207,8 @@ CLASSIFICAÇÃO:
 - ✅ Avança: score ≥ 70 E demonstrou pelo menos 3 dos 4 critérios com substância real.
 - 🟡 Talvez: score entre 55-69, ou score ≥ 70 mas com gap importante em critério essencial.
 - ❌ Não avança: score < 55, ou experiência majoritariamente SMB/inbound/transacional.`
-  },
+  }
+}
 
 // ─── UTILITÁRIOS ─────────────────────────────────────────────────────────────
 
