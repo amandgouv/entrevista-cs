@@ -47,6 +47,51 @@ CLASSIFICAÇÃO:
 - ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.`
   },
 
+  'csm-latam': {
+    titulo: 'Customer Success Manager Sênior — LATAM',
+    colecao: 'candidatos-csm-latam',
+    perguntas: [
+      "Me conta sobre uma conta B2B que você gerenciou onde o desafio principal era fazer o cliente enxergar valor no produto — não era um problema técnico. Como você conduziu isso e qual foi o resultado?",
+      "Você já identificou um risco de churn antes que o cliente reclamasse? O que você percebeu, como agiu e o que aconteceu com essa conta?",
+      "Como você conduz uma reunião estratégica com um C-level ou Diretor que tem pouco tempo e nenhuma paciência pra detalhe técnico? Me dá um exemplo real.",
+      "Fale sobre uma situação em que você identificou uma oportunidade de expansão numa conta. Como chegou a essa conclusão e como conduziu a conversa com o cliente? Responda em espanhol."
+    ],
+    promptSistema: `Você é um recrutador sênior da Curseduca avaliando candidatos para a vaga de Customer Success Manager Sênior — LATAM. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem.
+
+Critérios de avaliação:
+1. Orientação a resultado de negócio: conecta a gestão da conta com métricas reais do cliente (receita, conversão, churn, ROI). Quem fala só em adoção, NPS ou satisfação sem conectar a resultado financeiro perde pontos.
+2. Detecção proativa de risco: identifica sinais de churn por dados ou comportamento antes do cliente verbalizar. "Percebi que o cliente estava insatisfeito" sem evidência concreta não conta — exija o sinal específico que o candidato identificou.
+3. Comunicação executiva: adapta linguagem para C-level, vai direto ao que importa (resultado, risco, decisão), sabe o que cortar quando o tempo é curto. Quem foca em feature ou não tem exemplo real de acesso a C-level perde pontos.
+4. Expansão consultiva e fluência em espanhol (Q4): avalie duas dimensões nessa resposta:
+   - A oportunidade de expansão veio de um gap real de resultado do cliente, não de meta de upsell. Se soar como oferta comercial disfarçada, aponte.
+   - Fluência funcional em espanhol: o candidato conseguiu se expressar com clareza suficiente para um contexto profissional real. Sotaque, esquecimento pontual de palavra ou hesitação NÃO penalizam — o que importa é que a comunicação foi natural e transmitiu o conteúdo necessário. Se a resposta foi em português, registre como alerta grave.
+
+REGRAS DE AVALIAÇÃO DE CONTEÚDO (aplique com rigor):
+- Exija exemplos concretos e específicos. Respostas genéricas sem caso real = alerta grave.
+- Exija resultados tangíveis. Quem fala só em processo sem resultado perde pontos significativos.
+- Detecção de churn: exija sinais concretos que o candidato identificou (dados, comportamento, frequência de uso, ticket aberto etc.) — não aceite "percebi que o cliente estava insatisfeito" sem evidência.
+- Expansão: exija que a oportunidade tenha vindo de um gap real de resultado do cliente, não de uma meta interna. Se soar como upsell disfarçado, aponte.
+- Comunicação executiva: exija que o candidato tenha exemplo real de reunião com C-level ou Diretor — não apenas "tenho boa comunicação".
+
+REGRAS DE FORMA (seja tolerante):
+- Transcrições automáticas têm erros de pontuação e palavras trocadas — ignore completamente. Avalie raciocínio e conteúdo.
+- Respostas longas NÃO devem ser penalizadas. Só registre como alerta se a resposta for completamente circular e vazia após ouvir tudo.
+- Se uma transcrição estiver '[transcrição não capturada]', não penalize — registre que o áudio precisa ser ouvido manualmente.
+- Para a Q4 em espanhol: a transcrição automática pode ter mais erros por ser em outro idioma — seja ainda mais tolerante com a forma e foque no conteúdo e na fluência geral percebida.
+
+CALIBRAÇÃO DE SCORE:
+Score 80+: exemplos com métricas reais, raciocínio de negócio claro em pelo menos 3 critérios, espanhol funcional demonstrado. Muito raro.
+Score 65-79: exemplos reais com resultado percebido, comunicação executiva demonstrada, espanhol funcional. Perfil claramente sênior.
+Score 50-64: tem experiência mas ficou no processo sem conectar com resultado real, ou comunicação executiva superficial, ou espanhol muito limitado.
+Score abaixo de 50: respostas genéricas, sem acesso real a C-level, sem exemplo concreto, ou Q4 respondida em português.
+A maioria cai entre 50 e 72. Reserve abaixo de 50 para quem claramente não tem perfil. Reserve acima de 75 para quem claramente se destacou.
+
+CLASSIFICAÇÃO:
+- ✅ Avança: score ≥ 72 E demonstrou pelo menos 3 dos 4 critérios com substância real E espanhol funcional na Q4.
+- 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial ou espanhol muito limitado.
+- ❌ Não avança: score < 55, ou Q4 respondida em português, ou respostas predominantemente genéricas sem nenhum exemplo real.`
+  },
+
   'salesops': {
     titulo: 'Sales Operations',
     colecao: 'candidatos-salesops',
@@ -626,6 +671,9 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       </div>
       <div style={S.avisoAmarelo}>
         <p style={{ margin: 0, fontSize: '13px', color: '#92400e', lineHeight: '1.6' }}>⚠️ <strong>Sobre a transcrição automática:</strong> o sistema pode não capturar todas as palavras — e tudo bem! O time de G&C vai <strong>ouvir os áudios</strong> diretamente. 🎧</p>
+        {vagaId === 'csm-latam' && (
+          <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#92400e', lineHeight: '1.6' }}>🌎 <strong>Uma das perguntas deve ser respondida em espanhol.</strong> Não se preocupe com perfeição — o que importa é que a comunicação seja natural e você consiga se expressar à vontade.</p>
+        )}
       </div>
       <p style={{ color: '#475569', marginBottom: '16px', lineHeight: '1.6', fontSize: '14px' }}>Use <strong>Google Chrome</strong> no computador. Certifique-se de estar em um ambiente silencioso.</p>
       <div style={{ background: '#f1f5f9', borderRadius: '10px', padding: '12px 16px', marginBottom: '24px', fontSize: '13px', color: '#64748b', lineHeight: '1.6' }}>
@@ -686,10 +734,10 @@ function Painel({ onVoltar, apiKey }) {
   const [auth, setAuth] = useState(false)
   const [candidatos, setCandidatos] = useState([])
   const [exp, setExp] = useState(null)
-  const [telaInicial, setTelaInicial] = useState(true) // true = tela de seleção de vaga
+  const [telaInicial, setTelaInicial] = useState(true)
   const [vagaAtiva, setVagaAtiva] = useState("csm-senior")
   const [filtroStatus, setFiltroStatus] = useState("todos")
-  const [abaAtiva, setAbaAtiva] = useState("triagem") // triagem | aprovados | reprovados | links | feedback | encerradas
+  const [abaAtiva, setAbaAtiva] = useState("triagem")
   const [vagasFechadas, setVagasFechadas] = useState(() => {
     try { return JSON.parse(localStorage.getItem('vagas_fechadas') || '[]') } catch { return [] }
   })
@@ -703,6 +751,22 @@ function Painel({ onVoltar, apiKey }) {
   const [feedbacks, setFeedbacks] = useState([])
   const [carregandoFeedbacks, setCarregandoFeedbacks] = useState(false)
   const [ultimoAcesso, setUltimoAcesso] = useState(null)
+
+  const LISTA_VAGAS = [
+    ['csm-senior',    'Customer Success Manager Sênior', '#ede9fe', '#7c3aed'],
+    ['csm-latam',     'CSM Sênior — LATAM',              '#e0f2fe', '#0369a1'],
+    ['salesops',      'Sales Operations',                '#fef9c3', '#92400e'],
+    ['copywriter-sr', 'Copywriter Sênior',               '#fce7f3', '#9d174d'],
+    ['head-produto',  'Head de Produto',                 '#dcfce7', '#15803d'],
+    ['ae-b2b',        'Account Executive B2B',           '#fff7ed', '#c2410c'],
+  ]
+
+  const vagaBadgeStyle = (vaga) => {
+    const found = LISTA_VAGAS.find(([v]) => v === vaga)
+    return { display: 'inline-block', background: found?.[2] || '#f1f5f9', color: found?.[3] || '#475569', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }
+  }
+
+  const vagaLabel = (vaga) => LISTA_VAGAS.find(([v]) => v === vaga)?.[1] || vaga
 
   const carregarCandidatos = async () => {
     setCarregando(true)
@@ -815,7 +879,6 @@ function Painel({ onVoltar, apiKey }) {
 
   useEffect(() => {
     if (auth) {
-      // Registrar último acesso e carregar candidatos
       const chave = 'painel_ultimo_acesso'
       const anterior = localStorage.getItem(chave)
       setUltimoAcesso(anterior ? new Date(anterior) : null)
@@ -838,6 +901,23 @@ function Painel({ onVoltar, apiKey }) {
 
   const expandir = (i, c) => { if (exp === i) { setExp(null) } else { setExp(i); carregarAudios(c) } }
 
+  const isNovo = (x) => {
+    if (!ultimoAcesso) return false
+    const ts = x.timestamp?.toDate?.()
+    return ts && ts > ultimoAcesso
+  }
+  const totalNovos = candidatos.filter(isNovo).length
+
+  useEffect(() => {
+    if (!auth) return
+    if (totalNovos > 0) {
+      document.title = `(${totalNovos} novo${totalNovos > 1 ? 's' : ''}) Painel G&C — Entrevistas por Áudio`
+    } else {
+      document.title = 'Painel G&C — Entrevistas por Áudio'
+    }
+    return () => { document.title = 'Entrevistas por Áudio — Curseduca' }
+  }, [totalNovos, auth])
+
   const sP = {
     page: { minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui,sans-serif', padding: '32px 20px' },
     card: { background: 'white', borderRadius: '12px', padding: '20px', maxWidth: '900px', margin: '0 auto 16px', boxShadow: '0 1px 3px rgba(0,0,0,.1)', cursor: 'pointer' },
@@ -848,29 +928,9 @@ function Painel({ onVoltar, apiKey }) {
     btnRoxo: { background: '#ede9fe', color: '#7c3aed', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
     out: { background: 'white', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
     inp: { width: '100%', padding: '12px 16px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '16px', boxSizing: 'border-box', outline: 'none', marginBottom: '16px' },
-    vagaBadge: (vaga) => ({ display: 'inline-block', background: vaga === 'csm-senior' ? '#ede9fe' : vaga === 'salesops' ? '#fef9c3' : vaga === 'copywriter-sr' ? '#fce7f3' : vaga === 'head-produto' ? '#dcfce7' : '#fff7ed', color: vaga === 'csm-senior' ? '#7c3aed' : vaga === 'salesops' ? '#92400e' : vaga === 'copywriter-sr' ? '#9d174d' : vaga === 'head-produto' ? '#15803d' : '#c2410c', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }),
     abaBotao: (ativa) => ({ background: ativa ? '#7c3aed' : 'white', color: ativa ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }),
     filtroBotao: (ativo) => ({ background: ativo ? '#7c3aed' : 'white', color: ativo ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' })
   }
-
-  // Calculados antes de qualquer return condicional (regra dos hooks)
-  const isNovo = (x) => {
-    if (!ultimoAcesso) return false
-    const ts = x.timestamp?.toDate?.()
-    return ts && ts > ultimoAcesso
-  }
-  const totalNovos = candidatos.filter(isNovo).length
-
-  // Título da aba com contador de novos
-  useEffect(() => {
-    if (!auth) return
-    if (totalNovos > 0) {
-      document.title = `(${totalNovos} novo${totalNovos > 1 ? 's' : ''}) Painel G&C — Entrevistas por Áudio`
-    } else {
-      document.title = 'Painel G&C — Entrevistas por Áudio'
-    }
-    return () => { document.title = 'Entrevistas por Áudio — Curseduca' }
-  }, [totalNovos, auth])
 
   if (!auth) return (
     <div style={{ ...sP.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -905,7 +965,6 @@ function Painel({ onVoltar, apiKey }) {
     return 0
   })
 
-  // Tela inicial — seleção de vaga
   if (telaInicial) return (
     <div style={sP.page}>
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '32px 20px' }}>
@@ -922,13 +981,7 @@ function Painel({ onVoltar, apiKey }) {
 
         <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Vagas ativas</h2>
         <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
-          {[
-            ['csm-senior', 'Customer Success Manager Sênior', '#ede9fe', '#7c3aed'],
-            ['salesops', 'Sales Operations', '#fef9c3', '#92400e'],
-            ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
-            ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
-            ['ae-b2b', 'Account Executive B2B', '#fff7ed', '#c2410c'],
-          ].filter(([v]) => !vagasFechadas.includes(v)).map(([v, l, bg, cor]) => {
+          {LISTA_VAGAS.filter(([v]) => !vagasFechadas.includes(v)).map(([v, l, bg, cor]) => {
             const total = candidatos.filter(x => x.vaga === v).length
             const emTriagemV = candidatos.filter(x => x.vaga === v && (!x.etapa || x.etapa === 'triagem')).length
             const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
@@ -944,7 +997,7 @@ function Painel({ onVoltar, apiKey }) {
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={() => { setVagaAtiva(v); setTelaInicial(false); setAbaAtiva('triagem'); setExp(null); setFiltroStatus('todos') }}
                     style={{ ...sP.btn, marginTop: 0, padding: '8px 18px', fontSize: '13px', width: 'auto' }}>Ver candidatos →</button>
-                  <button onClick={() => { if(confirm('Fechar a vaga ' + l + '? Os dados ficam salvos e você pode reabrir depois.')) fecharVaga(v) }}
+                  <button onClick={() => { if(confirm('Encerrar a vaga ' + l + '? Os dados ficam salvos e você pode reabrir depois.')) fecharVaga(v) }}
                     style={{ background: 'white', color: '#94a3b8', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>Encerrar</button>
                 </div>
               </div>
@@ -955,18 +1008,12 @@ function Painel({ onVoltar, apiKey }) {
         {vagasFechadas.length > 0 && (<>
           <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Vagas encerradas</h2>
           <div style={{ display: 'grid', gap: '8px', marginBottom: '32px' }}>
-            {[
-              ['csm-senior', 'Customer Success Manager Sênior', '#f1f5f9', '#94a3b8'],
-              ['salesops', 'Sales Operations', '#f1f5f9', '#94a3b8'],
-              ['copywriter-sr', 'Copywriter Sênior', '#f1f5f9', '#94a3b8'],
-              ['head-produto', 'Head de Produto', '#f1f5f9', '#94a3b8'],
-              ['ae-b2b', 'Account Executive B2B', '#f1f5f9', '#94a3b8'],
-            ].filter(([v]) => vagasFechadas.includes(v)).map(([v, l, bg, cor]) => {
+            {LISTA_VAGAS.filter(([v]) => vagasFechadas.includes(v)).map(([v, l]) => {
               const total = candidatos.filter(x => x.vaga === v).length
               const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
               return (
                 <div key={v} style={{ background: '#f8fafc', borderRadius: '10px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', border: '1px solid #e2e8f0' }}>
-                  <span style={{ background: bg, color: cor, borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: '600' }}>{l}</span>
+                  <span style={{ background: '#f1f5f9', color: '#94a3b8', borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: '600' }}>{l}</span>
                   <span style={{ fontSize: '13px', color: '#94a3b8', flex: 1 }}>{total} candidato{total !== 1 ? 's' : ''} · {aprovadosV} aprovado{aprovadosV !== 1 ? 's' : ''}</span>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button onClick={() => { setVagaAtiva(v); setTelaInicial(false); setAbaAtiva('triagem'); setExp(null) }}
@@ -981,7 +1028,7 @@ function Painel({ onVoltar, apiKey }) {
         </>)}
 
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => setAbaAtiva('links') || setTelaInicial(false)} style={{ ...sP.out, fontSize: '13px', padding: '8px 16px' }}>🔗 Links das vagas</button>
+          <button onClick={() => { setAbaAtiva('links'); setTelaInicial(false) }} style={{ ...sP.out, fontSize: '13px', padding: '8px 16px' }}>🔗 Links das vagas</button>
           <button onClick={() => { setAbaAtiva('feedback'); setTelaInicial(false); carregarFeedbacks() }} style={{ ...sP.out, fontSize: '13px', padding: '8px 16px' }}>💬 Feedbacks</button>
         </div>
       </div>
@@ -990,7 +1037,6 @@ function Painel({ onVoltar, apiKey }) {
 
   return (
     <div style={sP.page}>
-      {/* Header */}
       <div style={{ maxWidth: '900px', margin: '0 auto 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <button onClick={() => setTelaInicial(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: '13px', cursor: 'pointer', padding: '0 0 4px', fontWeight: '600' }}>← Todas as vagas</button>
@@ -1003,20 +1049,14 @@ function Painel({ onVoltar, apiKey }) {
         </div>
       </div>
 
-      {/* Menu de vagas */}
       <div style={{ maxWidth: '900px', margin: '0 auto 4px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-        {[
-          ['csm-senior', 'CSM Sênior'],
-          ['salesops', 'Sales Ops'],
-          ['copywriter-sr', 'Copywriter Sr.'],
-          ['head-produto', 'Head de Produto'],
-          ['ae-b2b', 'AE B2B'],
-        ].filter(([v]) => !vagasFechadas.includes(v)).map(([v, l]) => {
+        {LISTA_VAGAS.filter(([v]) => !vagasFechadas.includes(v)).map(([v, l]) => {
           const novosNaVaga = candidatos.filter(x => x.vaga === v && isNovo(x)).length
+          const labelCurto = v === 'csm-senior' ? 'CSM Sênior' : v === 'csm-latam' ? 'CSM LATAM' : v === 'salesops' ? 'Sales Ops' : v === 'copywriter-sr' ? 'Copywriter Sr.' : v === 'head-produto' ? 'Head de Produto' : 'AE B2B'
           return (
             <button key={v} onClick={() => { setVagaAtiva(v); setAbaAtiva('triagem'); setExp(null); setFiltroStatus('todos') }}
               style={{ ...sP.abaBotao(vagaAtiva === v), fontSize: '13px', padding: '7px 16px', position: 'relative' }}>
-              {l}
+              {labelCurto}
               {novosNaVaga > 0 && (
                 <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#dc2626', color: 'white', borderRadius: '99px', padding: '1px 6px', fontSize: '10px', fontWeight: '700', lineHeight: '1.4' }}>{novosNaVaga}</span>
               )}
@@ -1031,7 +1071,6 @@ function Painel({ onVoltar, apiKey }) {
         </div>
       </div>
 
-      {/* Sub-abas da vaga ativa */}
       {abaAtiva !== 'links' && abaAtiva !== 'feedback' && (
         <div style={{ maxWidth: '900px', margin: '8px auto 16px', display: 'flex', gap: '6px', borderBottom: '2px solid #e2e8f0', paddingBottom: '0' }}>
           {[['triagem', `📋 Triagem (${emTriagem.length})`], ['aprovados', `✅ Aprovados (${aprovados.length})`], ['reprovados', `❌ Reprovados (${reprovados.length})`]].map(([v, l]) => (
@@ -1059,7 +1098,6 @@ function Painel({ onVoltar, apiKey }) {
         </div>
       )}
 
-      {/* Tela de feedback */}
       {abaAtiva === 'feedback' && (
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ background: 'white', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 3px rgba(0,0,0,.1)' }}>
@@ -1069,16 +1107,14 @@ function Painel({ onVoltar, apiKey }) {
             {!carregandoFeedbacks && feedbacks.length === 0 && (
               <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '24px 0' }}>Nenhum feedback ainda.</p>
             )}
-            {feedbacks.map((f, i) => (
+            {feedbacks.map((f) => (
               <div key={f.id} style={{ padding: '16px', background: '#f8fafc', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
                     {'⭐'.repeat(f.nota)}{'☆'.repeat(5 - (f.nota || 0))} <span style={{ color: '#7c3aed' }}>{f.nota}/5</span>
                   </span>
                   {f.conforto && <span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: '99px', padding: '2px 10px', fontSize: '12px', fontWeight: '600' }}>{f.conforto}</span>}
-                  <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: 'auto' }}>
-                    {f.vaga === 'csm-senior' ? 'CSM Sênior' : f.vaga === 'salesops' ? 'Sales Ops' : f.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : f.vaga === 'head-produto' ? 'Head de Produto' : f.vaga === 'ae-b2b' ? 'AE B2B' : f.vaga} · {f.data}
-                  </span>
+                  <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: 'auto' }}>{vagaLabel(f.vaga)} · {f.data}</span>
                 </div>
                 {f.comentario && <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6', fontStyle: 'italic' }}>"{f.comentario}"</p>}
               </div>
@@ -1087,19 +1123,12 @@ function Painel({ onVoltar, apiKey }) {
         </div>
       )}
 
-      {/* Tela de links */}
       {abaAtiva === 'links' && (
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ background: 'white', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 3px rgba(0,0,0,.1)' }}>
             <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}>Links para candidatos</h2>
             <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '24px' }}>Copie o link da vaga e envie diretamente para o candidato. Cada link abre só aquela vaga.</p>
-            {[
-              ['csm-senior', 'Customer Success Manager Sênior', '#ede9fe', '#7c3aed'],
-              ['salesops', 'Sales Operations', '#fef9c3', '#92400e'],
-              ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
-              ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
-              ['ae-b2b', 'Account Executive B2B', '#fff7ed', '#c2410c'],
-            ].map(([id, titulo, bg, cor]) => {
+            {LISTA_VAGAS.map(([id, titulo, bg, cor]) => {
               const url = `${window.location.origin}/?vaga=${id}`
               return (
                 <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: '#f8fafc', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
@@ -1136,7 +1165,7 @@ function Painel({ onVoltar, apiKey }) {
                 {isNovo(x) && (
                   <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} title="Novo" />
                 )}
-                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : x.vaga === 'head-produto' ? 'Head de Produto' : 'AE B2B'}</span>
+                <span style={vagaBadgeStyle(x.vaga)}>{vagaLabel(x.vaga)}</span>
                 <span style={{ color: '#94a3b8', fontSize: '13px' }}>{x.data}</span>
                 {x.etapa === 'aprovado' && <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}</span>}
                 {x.etapa === 'reprovado' && <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>❌ Reprovado {x.dataReprovacao ? `em ${x.dataReprovacao}` : ''}</span>}
@@ -1218,9 +1247,6 @@ export default function App() {
   const apiKey = import.meta.env.VITE_ANTHROPIC_KEY || ""
   const vagaId = getVagaFromUrl()
 
-  // Sem parâmetro ?vaga → painel direto
   if (!vagaId) return <Painel onVoltar={() => {}} apiKey={apiKey} />
-
-  // Com parâmetro ?vaga → tela do candidato, sem botão de painel
   return <TelaCandidato apiKey={apiKey} vagaId={vagaId} onFinalizar={() => {}} />
 }
