@@ -47,6 +47,51 @@ CLASSIFICAÇÃO:
 - ❌ Não avança: score < 55, ou respostas predominantemente genéricas sem nenhum exemplo real.`
   },
 
+  'csm-latam': {
+    titulo: 'Customer Success Manager Sênior — LATAM',
+    colecao: 'candidatos-csm-latam',
+    perguntas: [
+      "Me conta sobre uma conta B2B que você gerenciou onde o desafio principal era fazer o cliente enxergar valor no produto — não era um problema técnico. Como você conduziu isso e qual foi o resultado?",
+      "Você já identificou um risco de churn antes que o cliente reclamasse? O que você percebeu, como agiu e o que aconteceu com essa conta?",
+      "Como você conduz uma reunião estratégica com um C-level ou Diretor que tem pouco tempo e nenhuma paciência pra detalhe técnico? Me dá um exemplo real.",
+      "Fale sobre uma situação em que você identificou uma oportunidade de expansão numa conta. Como chegou a essa conclusão e como conduziu a conversa com o cliente? Responda em espanhol."
+    ],
+    promptSistema: `Você é um recrutador sênior da Curseduca avaliando candidatos para a vaga de Customer Success Manager Sênior — LATAM. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem.
+
+Critérios de avaliação:
+1. Orientação a resultado de negócio: conecta a gestão da conta com métricas reais do cliente (receita, conversão, churn, ROI). Quem fala só em adoção, NPS ou satisfação sem conectar a resultado financeiro perde pontos.
+2. Detecção proativa de risco: identifica sinais de churn por dados ou comportamento antes do cliente verbalizar. "Percebi que o cliente estava insatisfeito" sem evidência concreta não conta — exija o sinal específico que o candidato identificou.
+3. Comunicação executiva: adapta linguagem para C-level, vai direto ao que importa (resultado, risco, decisão), sabe o que cortar quando o tempo é curto. Quem foca em feature ou não tem exemplo real de acesso a C-level perde pontos.
+4. Expansão consultiva e fluência em espanhol (Q4): avalie duas dimensões nessa resposta:
+   - A oportunidade de expansão veio de um gap real de resultado do cliente, não de meta de upsell. Se soar como oferta comercial disfarçada, aponte.
+   - Fluência funcional em espanhol: o candidato conseguiu se expressar com clareza suficiente para um contexto profissional real. Sotaque, esquecimento pontual de palavra ou hesitação NÃO penalizam — o que importa é que a comunicação foi natural e transmitiu o conteúdo necessário. Se a resposta foi em português, registre como alerta grave.
+
+REGRAS DE AVALIAÇÃO DE CONTEÚDO (aplique com rigor):
+- Exija exemplos concretos e específicos. Respostas genéricas sem caso real = alerta grave.
+- Exija resultados tangíveis. Quem fala só em processo sem resultado perde pontos significativos.
+- Detecção de churn: exija sinais concretos que o candidato identificou (dados, comportamento, frequência de uso, ticket aberto etc.) — não aceite "percebi que o cliente estava insatisfeito" sem evidência.
+- Expansão: exija que a oportunidade tenha vindo de um gap real de resultado do cliente, não de uma meta interna.
+- Comunicação executiva: exija que o candidato tenha exemplo real de reunião com C-level ou Diretor.
+
+REGRAS DE FORMA (seja tolerante):
+- Transcrições automáticas têm erros de pontuação e palavras trocadas — ignore completamente. Avalie raciocínio e conteúdo.
+- Respostas longas NÃO devem ser penalizadas. Só registre como alerta se a resposta for completamente circular e vazia após ouvir tudo.
+- Se uma transcrição estiver '[transcrição não capturada]', não penalize — registre que o áudio precisa ser ouvido manualmente.
+- Para a Q4 em espanhol: a transcrição automática pode ter mais erros por ser em outro idioma — seja ainda mais tolerante com a forma e foque no conteúdo e na fluência geral percebida.
+
+CALIBRAÇÃO DE SCORE:
+Score 80+: exemplos com métricas reais, raciocínio de negócio claro em pelo menos 3 critérios, espanhol funcional demonstrado. Muito raro.
+Score 65-79: exemplos reais com resultado percebido, comunicação executiva demonstrada, espanhol funcional. Perfil claramente sênior.
+Score 50-64: tem experiência mas ficou no processo sem conectar com resultado real, ou comunicação executiva superficial, ou espanhol muito limitado.
+Score abaixo de 50: respostas genéricas, sem acesso real a C-level, sem exemplo concreto, ou Q4 respondida em português.
+A maioria cai entre 50 e 72. Reserve abaixo de 50 para quem claramente não tem perfil. Reserve acima de 75 para quem claramente se destacou.
+
+CLASSIFICAÇÃO:
+- ✅ Avança: score ≥ 72 E demonstrou pelo menos 3 dos 4 critérios com substância real E espanhol funcional na Q4.
+- 🟡 Talvez: score entre 55-71, ou score ≥ 72 mas com gap importante em critério essencial ou espanhol muito limitado.
+- ❌ Não avança: score < 55, ou Q4 respondida em português, ou respostas predominantemente genéricas sem nenhum exemplo real.`
+  },
+
   'salesops': {
     titulo: 'Sales Operations',
     colecao: 'candidatos-salesops',
@@ -971,6 +1016,7 @@ function Painel({ onVoltar, apiKey }) {
         <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
           {[
             ['csm-senior', 'Customer Success Manager Sênior', '#ede9fe', '#7c3aed'],
+            ['csm-latam', 'CSM Sênior — LATAM', '#e0f2fe', '#0369a1'],
             ['salesops', 'Sales Operations', '#fef9c3', '#92400e'],
             ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
             ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
@@ -1003,6 +1049,7 @@ function Painel({ onVoltar, apiKey }) {
           <div style={{ display: 'grid', gap: '8px', marginBottom: '32px' }}>
             {[
               ['csm-senior', 'Customer Success Manager Sênior'],
+              ['csm-latam', 'CSM Sênior — LATAM'],
               ['salesops', 'Sales Operations'],
               ['copywriter-sr', 'Copywriter Sênior'],
               ['head-produto', 'Head de Produto'],
@@ -1051,6 +1098,7 @@ function Painel({ onVoltar, apiKey }) {
       <div style={{ maxWidth: '900px', margin: '0 auto 4px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
         {[
           ['csm-senior', 'CSM Sênior'],
+          ['csm-latam', 'CSM LATAM'],
           ['salesops', 'Sales Ops'],
           ['copywriter-sr', 'Copywriter Sr.'],
           ['head-produto', 'Head de Produto'],
@@ -1174,6 +1222,7 @@ function Painel({ onVoltar, apiKey }) {
             <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '24px' }}>Copie o link da vaga e envie diretamente para o candidato.</p>
             {[
               ['csm-senior', 'Customer Success Manager Sênior', '#ede9fe', '#7c3aed'],
+              ['csm-latam', 'CSM Sênior — LATAM', '#e0f2fe', '#0369a1'],
               ['salesops', 'Sales Operations', '#fef9c3', '#92400e'],
               ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
               ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
