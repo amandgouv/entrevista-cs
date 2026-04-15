@@ -1175,7 +1175,7 @@ function Painel({ onVoltar, apiKey }) {
                     {f.vaga === 'csm-senior' ? 'CSM Sênior' : f.vaga === 'salesops' ? 'Sales Ops' : f.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : f.vaga === 'head-produto' ? 'Head de Produto' : f.vaga === 'ae-b2b' ? 'AE B2B' : f.vaga} · {f.data}
                   </span>
                 </div>
-                {f.comentario && <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6', fontStyle: 'italic' }}>"{f.comentario}"</p>}
+                {f.comentario && <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6', fontStyle: 'italic' }}>{f.comentario}</p>}
               </div>
             ))}
           </div>
