@@ -686,10 +686,10 @@ function Painel({ onVoltar, apiKey }) {
   const [auth, setAuth] = useState(false)
   const [candidatos, setCandidatos] = useState([])
   const [exp, setExp] = useState(null)
-  const [telaInicial, setTelaInicial] = useState(true) // true = tela de seleção de vaga
+  const [telaInicial, setTelaInicial] = useState(true)
   const [vagaAtiva, setVagaAtiva] = useState("csm-senior")
   const [filtroStatus, setFiltroStatus] = useState("todos")
-  const [abaAtiva, setAbaAtiva] = useState("triagem") // triagem | aprovados | reprovados | links | feedback | encerradas
+  const [abaAtiva, setAbaAtiva] = useState("triagem")
   const [vagasFechadas, setVagasFechadas] = useState(() => {
     try { return JSON.parse(localStorage.getItem('vagas_fechadas') || '[]') } catch { return [] }
   })
@@ -697,7 +697,7 @@ function Painel({ onVoltar, apiKey }) {
   const [reavaliando, setReavaliando] = useState(null)
   const [passando, setPassando] = useState(null)
   const [reprovando, setReprovando] = useState(null)
-  const [filtroReprovados, setFiltroReprovados] = useState("todos") // todos | triagem | pos-entrevista
+  const [filtroReprovados, setFiltroReprovados] = useState("todos")
   const [audiosCarregados, setAudiosCarregados] = useState({})
   const [carregandoAudio, setCarregandoAudio] = useState(null)
   const [ordenacao, setOrdenacao] = useState('data-desc')
@@ -820,17 +820,6 @@ function Painel({ onVoltar, apiKey }) {
     } catch (e) { console.error(e); setCarregandoFeedbacks(false); return [] }
   }
 
-  useEffect(() => {
-    if (auth) {
-      // Registrar último acesso e carregar candidatos
-      const chave = 'painel_ultimo_acesso'
-      const anterior = localStorage.getItem(chave)
-      setUltimoAcesso(anterior ? new Date(anterior) : null)
-      localStorage.setItem(chave, new Date().toISOString())
-      carregarCandidatos()
-    }
-  }, [auth])
-
   const analisarFeedbacks = async (lista) => {
     if (!lista || lista.length === 0) return
     setAnalisandoFeedbacks(true)
@@ -870,7 +859,7 @@ function Painel({ onVoltar, apiKey }) {
     setAnalisandoFeedbacks(false)
   }
 
-    const fecharVaga = (vagaId) => {
+  const fecharVaga = (vagaId) => {
     const novas = [...vagasFechadas, vagaId]
     setVagasFechadas(novas)
     localStorage.setItem('vagas_fechadas', JSON.stringify(novas))
@@ -883,6 +872,34 @@ function Painel({ onVoltar, apiKey }) {
   }
 
   const expandir = (i, c) => { if (exp === i) { setExp(null) } else { setExp(i); carregarAudios(c) } }
+
+  const isNovo = (x) => {
+    if (!ultimoAcesso) return false
+    const ts = x.timestamp?.toDate?.()
+    return ts && ts > ultimoAcesso
+  }
+
+  const totalNovos = candidatos.filter(isNovo).length
+
+  useEffect(() => {
+    if (auth) {
+      const chave = 'painel_ultimo_acesso'
+      const anterior = localStorage.getItem(chave)
+      setUltimoAcesso(anterior ? new Date(anterior) : null)
+      localStorage.setItem(chave, new Date().toISOString())
+      carregarCandidatos()
+    }
+  }, [auth])
+
+  useEffect(() => {
+    if (!auth) return
+    if (totalNovos > 0) {
+      document.title = `(${totalNovos} novo${totalNovos > 1 ? 's' : ''}) Painel G&C — Entrevistas por Áudio`
+    } else {
+      document.title = 'Painel G&C — Entrevistas por Áudio'
+    }
+    return () => { document.title = 'Entrevistas por Áudio — Curseduca' }
+  }, [totalNovos, auth])
 
   const sP = {
     page: { minHeight: '100vh', background: '#f8fafc', fontFamily: 'system-ui,sans-serif', padding: '32px 20px' },
@@ -898,25 +915,6 @@ function Painel({ onVoltar, apiKey }) {
     abaBotao: (ativa) => ({ background: ativa ? '#7c3aed' : 'white', color: ativa ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }),
     filtroBotao: (ativo) => ({ background: ativo ? '#7c3aed' : 'white', color: ativo ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' })
   }
-
-  // Calculados antes de qualquer return condicional (regra dos hooks)
-  const isNovo = (x) => {
-    if (!ultimoAcesso) return false
-    const ts = x.timestamp?.toDate?.()
-    return ts && ts > ultimoAcesso
-  }
-  const totalNovos = candidatos.filter(isNovo).length
-
-  // Título da aba com contador de novos
-  useEffect(() => {
-    if (!auth) return
-    if (totalNovos > 0) {
-      document.title = `(${totalNovos} novo${totalNovos > 1 ? 's' : ''}) Painel G&C — Entrevistas por Áudio`
-    } else {
-      document.title = 'Painel G&C — Entrevistas por Áudio'
-    }
-    return () => { document.title = 'Entrevistas por Áudio — Curseduca' }
-  }, [totalNovos, auth])
 
   if (!auth) return (
     <div style={{ ...sP.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -955,7 +953,6 @@ function Painel({ onVoltar, apiKey }) {
     return 0
   })
 
-  // Tela inicial — seleção de vaga
   if (telaInicial) return (
     <div style={sP.page}>
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '32px 20px' }}>
@@ -979,7 +976,6 @@ function Painel({ onVoltar, apiKey }) {
             ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
             ['ae-b2b', 'Account Executive B2B', '#fff7ed', '#c2410c'],
           ].filter(([v]) => !vagasFechadas.includes(v)).map(([v, l, bg, cor]) => {
-            const total = candidatos.filter(x => x.vaga === v).length
             const emTriagemV = candidatos.filter(x => x.vaga === v && (!x.etapa || x.etapa === 'triagem')).length
             const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
             const novosV = candidatos.filter(x => x.vaga === v && isNovo(x)).length
@@ -1006,17 +1002,17 @@ function Painel({ onVoltar, apiKey }) {
           <h2 style={{ fontSize: '14px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>Vagas encerradas</h2>
           <div style={{ display: 'grid', gap: '8px', marginBottom: '32px' }}>
             {[
-              ['csm-senior', 'Customer Success Manager Sênior', '#f1f5f9', '#94a3b8'],
-              ['salesops', 'Sales Operations', '#f1f5f9', '#94a3b8'],
-              ['copywriter-sr', 'Copywriter Sênior', '#f1f5f9', '#94a3b8'],
-              ['head-produto', 'Head de Produto', '#f1f5f9', '#94a3b8'],
-              ['ae-b2b', 'Account Executive B2B', '#f1f5f9', '#94a3b8'],
-            ].filter(([v]) => vagasFechadas.includes(v)).map(([v, l, bg, cor]) => {
+              ['csm-senior', 'Customer Success Manager Sênior'],
+              ['salesops', 'Sales Operations'],
+              ['copywriter-sr', 'Copywriter Sênior'],
+              ['head-produto', 'Head de Produto'],
+              ['ae-b2b', 'Account Executive B2B'],
+            ].filter(([v]) => vagasFechadas.includes(v)).map(([v, l]) => {
               const total = candidatos.filter(x => x.vaga === v).length
               const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
               return (
                 <div key={v} style={{ background: '#f8fafc', borderRadius: '10px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', border: '1px solid #e2e8f0' }}>
-                  <span style={{ background: bg, color: cor, borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: '600' }}>{l}</span>
+                  <span style={{ background: '#f1f5f9', color: '#94a3b8', borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: '600' }}>{l}</span>
                   <span style={{ fontSize: '13px', color: '#94a3b8', flex: 1 }}>{total} candidato{total !== 1 ? 's' : ''} · {aprovadosV} aprovado{aprovadosV !== 1 ? 's' : ''}</span>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button onClick={() => { setVagaAtiva(v); setTelaInicial(false); setAbaAtiva('triagem'); setExp(null) }}
@@ -1031,7 +1027,7 @@ function Painel({ onVoltar, apiKey }) {
         </>)}
 
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => setAbaAtiva('links') || setTelaInicial(false)} style={{ ...sP.out, fontSize: '13px', padding: '8px 16px' }}>🔗 Links das vagas</button>
+          <button onClick={() => { setAbaAtiva('links'); setTelaInicial(false) }} style={{ ...sP.out, fontSize: '13px', padding: '8px 16px' }}>🔗 Links das vagas</button>
           <button onClick={() => { setAbaAtiva('feedback'); setTelaInicial(false); carregarFeedbacks().then(lista => { if (lista) analisarFeedbacks(lista) }) }} style={{ ...sP.out, fontSize: '13px', padding: '8px 16px' }}>💬 Feedbacks</button>
         </div>
       </div>
@@ -1040,7 +1036,6 @@ function Painel({ onVoltar, apiKey }) {
 
   return (
     <div style={sP.page}>
-      {/* Header */}
       <div style={{ maxWidth: '900px', margin: '0 auto 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <button onClick={() => setTelaInicial(true)} style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: '13px', cursor: 'pointer', padding: '0 0 4px', fontWeight: '600' }}>← Todas as vagas</button>
@@ -1053,7 +1048,6 @@ function Painel({ onVoltar, apiKey }) {
         </div>
       </div>
 
-      {/* Menu de vagas */}
       <div style={{ maxWidth: '900px', margin: '0 auto 4px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
         {[
           ['csm-senior', 'CSM Sênior'],
@@ -1081,23 +1075,21 @@ function Painel({ onVoltar, apiKey }) {
         </div>
       </div>
 
-      {/* Sub-abas da vaga ativa */}
       {abaAtiva !== 'links' && abaAtiva !== 'feedback' && (
         <div style={{ maxWidth: '900px', margin: '8px auto 16px', display: 'flex', gap: '6px', borderBottom: '2px solid #e2e8f0', paddingBottom: '0' }}>
           {[['triagem', `📋 Triagem (${emTriagem.length})`], ['aprovados', `✅ Aprovados (${aprovados.length})`], ['reprovados', `❌ Reprovados (${reprovados.length})`]].map(([v, l]) => (
             <button key={v} onClick={() => { setAbaAtiva(v); setExp(null) }} style={{ background: 'none', border: 'none', borderBottom: abaAtiva === v ? '2px solid #7c3aed' : '2px solid transparent', marginBottom: '-2px', padding: '8px 16px', fontSize: '13px', fontWeight: abaAtiva === v ? '700' : '500', color: abaAtiva === v ? '#7c3aed' : '#64748b', cursor: 'pointer' }}>{l}</button>
           ))}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-            {abaAtiva === 'reprovados' && (
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px', alignItems: 'center' }}>
+            {abaAtiva === 'reprovados' && (<>
               <span style={{ fontSize: '12px', color: '#94a3b8' }}>Tipo:</span>
               {[["todos", "Todos"], ["triagem", "Triagem"], ["pos-entrevista", "Pós-entrevista"]].map(([v, l]) => (
                 <button key={v} onClick={() => setFiltroReprovados(v)}
                   style={{ background: filtroReprovados === v ? '#dc2626' : 'white', color: filtroReprovados === v ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '4px 10px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}>{l}</button>
               ))}
-            </div>
-          )}
-          {abaAtiva === 'triagem' && (<>
+              <span style={{ color: '#e2e8f0' }}>|</span>
+            </>)}
+            {abaAtiva === 'triagem' && (<>
               <span style={{ fontSize: '12px', color: '#94a3b8' }}>IA:</span>
               {[["todos", "Todos"], ["avanca", "✅"], ["talvez", "🟡"], ["nao", "❌"]].map(([v, l]) => (
                 <button key={v} onClick={() => setFiltroStatus(v)} style={{ ...sP.filtroBotao(filtroStatus === v), padding: '4px 10px', fontSize: '12px' }}>{l}</button>
@@ -1118,11 +1110,8 @@ function Painel({ onVoltar, apiKey }) {
         </div>
       )}
 
-      {/* Tela de feedback */}
       {abaAtiva === 'feedback' && (
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-
-          {/* Análise consolidada */}
           <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,.1)', marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div>
@@ -1155,8 +1144,6 @@ function Painel({ onVoltar, apiKey }) {
               <p style={{ color: '#94a3b8', fontSize: '13px', textAlign: 'center', padding: '12px 0' }}>Clique em "Reanalisar" para gerar a análise consolidada.</p>
             )}
           </div>
-
-          {/* Lista de feedbacks individuais */}
           <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,.1)' }}>
             <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>Feedbacks individuais</h2>
             <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '20px' }}>Respostas anônimas coletadas ao final de cada entrevista.</p>
@@ -1164,15 +1151,13 @@ function Painel({ onVoltar, apiKey }) {
             {!carregandoFeedbacks && feedbacks.length === 0 && (
               <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center', padding: '24px 0' }}>Nenhum feedback ainda.</p>
             )}
-            {feedbacks.map((f, i) => (
+            {feedbacks.map((f) => (
               <div key={f.id} style={{ padding: '16px', background: '#f8fafc', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
                   <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>{f.nota}/5</span>
-                  </span>
                   {f.conforto && <span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: '99px', padding: '2px 10px', fontSize: '12px', fontWeight: '600' }}>{f.conforto}</span>}
                   <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: 'auto' }}>
-                    {f.vaga === 'csm-senior' ? 'CSM Senoir' : f.vaga === 'salesops' ? 'Sales Ops' : f.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : f.vaga === 'head-produto' ? 'Head de Produto' : f.vaga === 'ae-b2b' ? 'AE B2B' : f.vaga} - {f.data}
+                    {f.vaga === 'csm-senior' ? 'CSM Sênior' : f.vaga === 'salesops' ? 'Sales Ops' : f.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : f.vaga === 'head-produto' ? 'Head de Produto' : f.vaga === 'ae-b2b' ? 'AE B2B' : f.vaga} · {f.data}
                   </span>
                 </div>
                 {f.comentario && <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6', fontStyle: 'italic' }}>{f.comentario}</p>}
@@ -1182,12 +1167,11 @@ function Painel({ onVoltar, apiKey }) {
         </div>
       )}
 
-      {/* Tela de links */}
       {abaAtiva === 'links' && (
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ background: 'white', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 3px rgba(0,0,0,.1)' }}>
             <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}>Links para candidatos</h2>
-            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '24px' }}>Copie o link da vaga e envie diretamente para o candidato. Cada link abre só aquela vaga.</p>
+            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '24px' }}>Copie o link da vaga e envie diretamente para o candidato.</p>
             {[
               ['csm-senior', 'Customer Success Manager Sênior', '#ede9fe', '#7c3aed'],
               ['salesops', 'Sales Operations', '#fef9c3', '#92400e'],
@@ -1228,9 +1212,7 @@ function Painel({ onVoltar, apiKey }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: '16px' }}>{x.nome}</strong>
-                {isNovo(x) && (
-                  <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} title="Novo" />
-                )}
+                {isNovo(x) && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} title="Novo" />}
                 <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : x.vaga === 'head-produto' ? 'Head de Produto' : 'AE B2B'}</span>
                 <span style={{ color: '#94a3b8', fontSize: '13px' }}>{x.data}</span>
                 {x.etapa === 'aprovado' && <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}</span>}
@@ -1249,15 +1231,31 @@ function Painel({ onVoltar, apiKey }) {
                   <button style={{ ...sP.btnRoxo, opacity: estaReavaliando ? 0.6 : 1 }} onClick={(e) => reavaliar(x, e)} disabled={estaReavaliando}>
                     {estaReavaliando ? '⏳ Reavaliando...' : '🤖 Reavaliar com IA'}
                   </button>
-                  {x.etapa !== 'aprovado' && x.etapa !== 'reprovado' && (<>
-                    <button style={{ ...sP.btnVerde, opacity: estaPassando ? 0.6 : 1 }} onClick={(e) => passarProximaEtapa(x, e)} disabled={estaPassando}>
-                      {estaPassando ? '⏳ Salvando...' : '✅ Passar pra próxima etapa'}
-                    </button>
-                    <button style={{ ...sP.btnVermelho, opacity: reprovando === x.id ? 0.6 : 1 }} onClick={(e) => reprovar(x, e)} disabled={reprovando === x.id}>
-                      {reprovando === x.id ? '⏳ Salvando...' : '❌ Reprovar'}
-                    </button>
-                  </>)}
-                  {(x.etapa === 'aprovado' || x.etapa === 'reprovado') && (
+
+                  {/* Triagem: aprovar ou reprovar */}
+                  {(!x.etapa || x.etapa === 'triagem') && (
+                    <>
+                      <button style={{ ...sP.btnVerde, opacity: estaPassando ? 0.6 : 1 }} onClick={(e) => passarProximaEtapa(x, e)} disabled={estaPassando}>
+                        {estaPassando ? '⏳ Salvando...' : '✅ Passar pra próxima etapa'}
+                      </button>
+                      <button style={{ ...sP.btnVermelho, opacity: reprovando === x.id ? 0.6 : 1 }} onClick={(e) => reprovar(x, e, 'triagem')} disabled={reprovando === x.id}>
+                        {reprovando === x.id ? '⏳ Salvando...' : '❌ Reprovar'}
+                      </button>
+                    </>
+                  )}
+
+                  {/* Aprovado: reprovar pós-entrevista ou voltar pra triagem */}
+                  {x.etapa === 'aprovado' && (
+                    <>
+                      <button style={{ ...sP.btnVermelho, opacity: reprovando === x.id ? 0.6 : 1 }} onClick={(e) => reprovar(x, e, 'pos-entrevista')} disabled={reprovando === x.id}>
+                        {reprovando === x.id ? '⏳ Salvando...' : '❌ Reprovar pós-entrevista'}
+                      </button>
+                      <button style={sP.btnCinza} onClick={(e) => voltarParaTriagem(x, e)}>↩ Voltar pra triagem</button>
+                    </>
+                  )}
+
+                  {/* Reprovado: só voltar pra triagem */}
+                  {x.etapa === 'reprovado' && (
                     <button style={sP.btnCinza} onClick={(e) => voltarParaTriagem(x, e)}>↩ Voltar pra triagem</button>
                   )}
                 </div>
@@ -1276,7 +1274,6 @@ function Painel({ onVoltar, apiKey }) {
                   </div>
                 )}
 
-                {/* Resumos por pergunta */}
                 {x.avaliacao?.resumos_por_pergunta?.length > 0 && (
                   <div style={{ marginBottom: '16px' }}>
                     <strong style={{ fontSize: '13px', color: '#475569' }}>Resumo das respostas</strong>
@@ -1290,6 +1287,7 @@ function Painel({ onVoltar, apiKey }) {
                     </div>
                   </div>
                 )}
+
                 <strong style={{ fontSize: '13px', color: '#475569' }}>Respostas</strong>
                 {carregandoAudio === x.id && <p style={{ fontSize: '13px', color: '#7c3aed', marginTop: '8px' }}>Carregando áudios...</p>}
                 {x.respostas?.map((r, j) => (
@@ -1327,9 +1325,6 @@ export default function App() {
   const apiKey = import.meta.env.VITE_ANTHROPIC_KEY || ""
   const vagaId = getVagaFromUrl()
 
-  // Sem parâmetro ?vaga → painel direto
   if (!vagaId) return <Painel onVoltar={() => {}} apiKey={apiKey} />
-
-  // Com parâmetro ?vaga → tela do candidato, sem botão de painel
   return <TelaCandidato apiKey={apiKey} vagaId={vagaId} onFinalizar={() => {}} />
 }
