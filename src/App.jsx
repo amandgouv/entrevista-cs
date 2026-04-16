@@ -281,6 +281,21 @@ function blobToBase64(blob) {
   })
 }
 
+// ─── NOVO: converte base64 data URL para blob URL para suporte a seek ────────
+function base64ToBlobUrl(base64DataUrl) {
+  try {
+    const [header, data] = base64DataUrl.split(',')
+    const mime = header.match(/:(.*?);/)?.[1] || 'audio/webm'
+    const binary = atob(data)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const blob = new Blob([bytes], { type: mime })
+    return URL.createObjectURL(blob)
+  } catch {
+    return base64DataUrl // fallback para base64 se conversão falhar
+  }
+}
+
 const CHUNK_SIZE = 900000
 
 function splitBase64(b64) {
@@ -744,6 +759,8 @@ function Painel({ onVoltar, apiKey }) {
   const [reprovando, setReprovando] = useState(null)
   const [filtroReprovados, setFiltroReprovados] = useState("todos")
   const [audiosCarregados, setAudiosCarregados] = useState({})
+  // ─── NOVO: blob URLs separados para suporte a seek no player ────────────────
+  const [blobUrls, setBlobUrls] = useState({})
   const [carregandoAudio, setCarregandoAudio] = useState(null)
   const [ordenacao, setOrdenacao] = useState('data-desc')
   const [feedbacks, setFeedbacks] = useState([])
@@ -751,6 +768,20 @@ function Painel({ onVoltar, apiKey }) {
   const [analiseFeedbacks, setAnaliseFeedbacks] = useState(null)
   const [analisandoFeedbacks, setAnalisandoFeedbacks] = useState(false)
   const [ultimoAcesso, setUltimoAcesso] = useState(null)
+
+  // ─── NOVO: cleanup de blob URLs ao desmontar o painel ───────────────────────
+  useEffect(() => {
+    return () => {
+      setBlobUrls(prev => {
+        Object.values(prev).forEach(perPerguntas => {
+          Object.values(perPerguntas).forEach(url => {
+            try { URL.revokeObjectURL(url) } catch {}
+          })
+        })
+        return {}
+      })
+    }
+  }, [])
 
   const carregarCandidatos = async () => {
     setCarregando(true)
@@ -789,6 +820,15 @@ function Painel({ onVoltar, apiKey }) {
           if (parts.length === meta.totalChunks) a[p] = joinBase64(parts)
         }
       }
+
+      // ─── NOVO: converte base64 → blob URL para habilitar seek no player ─────
+      const novosBlobUrls = {}
+      for (const [pergIdx, base64] of Object.entries(a)) {
+        novosBlobUrls[pergIdx] = base64ToBlobUrl(base64)
+      }
+      setBlobUrls(prev => ({ ...prev, [c.id]: novosBlobUrls }))
+      // ────────────────────────────────────────────────────────────────────────
+
       setAudiosCarregados(prev => ({ ...prev, [c.id]: a }))
     } catch { setAudiosCarregados(prev => ({ ...prev, [c.id]: {} })) }
     setCarregandoAudio(null)
@@ -849,6 +889,12 @@ function Painel({ onVoltar, apiKey }) {
       for (const ad of aSnap.docs) await deleteDoc(doc(db, c.colecao, c.id, "audios", ad.id))
       await deleteDoc(doc(db, c.colecao, c.id))
       setCandidatos(prev => prev.filter(x => x.id !== c.id))
+      // ─── NOVO: revogar blob URLs do candidato deletado ───────────────────────
+      setBlobUrls(prev => {
+        const urls = prev[c.id]
+        if (urls) Object.values(urls).forEach(u => { try { URL.revokeObjectURL(u) } catch {} })
+        const n = { ...prev }; delete n[c.id]; return n
+      })
       setAudiosCarregados(prev => { const n = { ...prev }; delete n[c.id]; return n })
     } catch (e) { alert("Erro: " + e.message) }
   }
@@ -1253,6 +1299,8 @@ function Painel({ onVoltar, apiKey }) {
       {abaAtiva !== 'links' && abaAtiva !== 'feedback' && listaAtiva.map((x, i) => {
         const vc = VAGAS[x.vaga] || VAGAS['csm-senior']
         const aud = audiosCarregados[x.id] || {}
+        // ─── NOVO: blob URLs para este candidato (com suporte a seek) ───────────
+        const candidatoBlobUrls = blobUrls[x.id] || {}
         const estaReavaliando = reavaliando === x.id
         const estaPassando = passando === x.id
 
@@ -1262,7 +1310,7 @@ function Painel({ onVoltar, apiKey }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: '16px' }}>{x.nome}</strong>
                 {isNovo(x) && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} title="Novo" />}
-                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : x.vaga === 'head-produto' ? 'Head de Produto' : 'AE B2B'}</span>
+                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'csm-latam' ? 'CSM LATAM' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : x.vaga === 'head-produto' ? 'Head de Produto' : 'AE B2B'}</span>
                 <span style={{ color: '#94a3b8', fontSize: '13px' }}>{x.data}</span>
                 {x.etapa === 'aprovado' && <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}</span>}
                 {x.etapa === 'reprovado' && <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>❌ {x.tipoReprovacao === 'pos-entrevista' ? 'Reprovado pós-entrevista' : 'Reprovado'} {x.dataReprovacao ? `em ${x.dataReprovacao}` : ''}</span>}
@@ -1281,7 +1329,6 @@ function Painel({ onVoltar, apiKey }) {
                     {estaReavaliando ? '⏳ Reavaliando...' : '🤖 Reavaliar com IA'}
                   </button>
 
-                  {/* Triagem: aprovar ou reprovar */}
                   {(!x.etapa || x.etapa === 'triagem') && (
                     <>
                       <button style={{ ...sP.btnVerde, opacity: estaPassando ? 0.6 : 1 }} onClick={(e) => passarProximaEtapa(x, e)} disabled={estaPassando}>
@@ -1293,7 +1340,6 @@ function Painel({ onVoltar, apiKey }) {
                     </>
                   )}
 
-                  {/* Aprovado: reprovar pós-entrevista ou voltar pra triagem */}
                   {x.etapa === 'aprovado' && (
                     <>
                       <button style={{ ...sP.btnVermelho, opacity: reprovando === x.id ? 0.6 : 1 }} onClick={(e) => reprovar(x, e, 'pos-entrevista')} disabled={reprovando === x.id}>
@@ -1303,7 +1349,6 @@ function Painel({ onVoltar, apiKey }) {
                     </>
                   )}
 
-                  {/* Reprovado: só voltar pra triagem */}
                   {x.etapa === 'reprovado' && (
                     <button style={sP.btnCinza} onClick={(e) => voltarParaTriagem(x, e)}>↩ Voltar pra triagem</button>
                   )}
@@ -1342,8 +1387,11 @@ function Painel({ onVoltar, apiKey }) {
                 {x.respostas?.map((r, j) => (
                   <div key={j} style={{ marginTop: '12px', background: '#f8fafc', borderRadius: '8px', padding: '16px' }}>
                     <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>P{j + 1}: {vc.perguntas[j]}</p>
-                    {aud[j]
-                      ? <div onClick={e => e.stopPropagation()}><audio controls src={aud[j]} style={{ width: '100%', height: '36px' }} /></div>
+                    {/* ─── NOVO: usa blob URL para seek; fallback para base64 se não disponível ── */}
+                    {(candidatoBlobUrls[j] || aud[j])
+                      ? <div onClick={e => e.stopPropagation()}>
+                          <audio controls src={candidatoBlobUrls[j] || aud[j]} style={{ width: '100%', height: '36px' }} />
+                        </div>
                       : x.errosAudio?.includes(j + 1)
                         ? <p style={{ fontSize: '12px', color: '#dc2626', margin: 0 }}>⚠️ Áudio não salvo</p>
                         : carregandoAudio !== x.id
