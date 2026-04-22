@@ -257,7 +257,7 @@ CLASSIFICAÇÃO:
   },
 
   'parcerias-sr': {
-    titulo: 'Parcerias & Alianças Estratégicas',
+    titulo: 'Analista de Parcerias Sênior',
     colecao: 'candidatos-parcerias-sr',
     perguntas: [
       "Me conta um parceiro estratégico que você trouxe do zero — do primeiro mapeamento até a parceria ativa. Como você identificou essa empresa, quem eram os decisores, como conduziu a negociação e qual foi o resultado?",
@@ -1112,7 +1112,7 @@ function Painel({ onVoltar, apiKey }) {
             ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
             ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
             ['ae-b2b', 'Account Executive B2B', '#fff7ed', '#c2410c'],
-            ['parcerias-sr', 'Parcerias & Alianças Estratégicas', '#ccfbf1', '#0f766e'],
+            ['parcerias-sr', 'Analista de Parcerias Sênior', '#ccfbf1', '#0f766e'],
           ].filter(([v]) => !vagasFechadas.includes(v)).map(([v, l, bg, cor]) => {
             const emTriagemV = candidatos.filter(x => x.vaga === v && (!x.etapa || x.etapa === 'triagem')).length
             const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
@@ -1146,7 +1146,7 @@ function Painel({ onVoltar, apiKey }) {
               ['copywriter-sr', 'Copywriter Sênior'],
               ['head-produto', 'Head de Produto'],
               ['ae-b2b', 'Account Executive B2B'],
-              ['parcerias-sr', 'Parcerias & Alianças Estratégicas'],
+              ['parcerias-sr', 'Analista de Parcerias Sênior'],
             ].filter(([v]) => vagasFechadas.includes(v)).map(([v, l]) => {
               const total = candidatos.filter(x => x.vaga === v).length
               const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
@@ -1321,7 +1321,7 @@ function Painel({ onVoltar, apiKey }) {
               ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
               ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
               ['ae-b2b', 'Account Executive B2B', '#fff7ed', '#c2410c'],
-              ['parcerias-sr', 'Parcerias & Alianças Estratégicas', '#ccfbf1', '#0f766e'],
+              ['parcerias-sr', 'Analista de Parcerias Sênior', '#ccfbf1', '#0f766e'],
             ].map(([id, titulo, bg, cor]) => {
               const url = `${window.location.origin}/?vaga=${id}`
               return (
@@ -1358,7 +1358,7 @@ function Painel({ onVoltar, apiKey }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: '16px' }}>{x.nome}</strong>
                 {isNovo(x) && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} title="Novo" />}
-                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'csm-latam' ? 'CSM LATAM' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : x.vaga === 'head-produto' ? 'Head de Produto' : x.vaga === 'parcerias-sr' ? 'Parcerias Sr.' : 'AE B2B'}</span>
+                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'csm-latam' ? 'CSM LATAM' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : x.vaga === 'head-produto' ? 'Head de Produto' : x.vaga === 'parcerias-sr' ? 'Parcerias Sr.' : x.vaga === 'ae-b2b' ? 'AE B2B' : x.vaga}</span>
                 <span style={{ color: '#94a3b8', fontSize: '13px' }}>{x.data}</span>
                 {x.etapa === 'aprovado' && <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}</span>}
                 {x.etapa === 'reprovado' && <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>❌ {x.tipoReprovacao === 'pos-entrevista' ? 'Reprovado pós-entrevista' : 'Reprovado'} {x.dataReprovacao ? `em ${x.dataReprovacao}` : ''}</span>}
