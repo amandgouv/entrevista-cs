@@ -254,6 +254,59 @@ CLASSIFICAÇÃO:
 - ✅ Avança: score ≥ 70 E processo de prospecção estruturado demonstrado + pelo menos mais 2 critérios com substância.
 - 🟡 Talvez: score entre 58-69, ou score ≥ 70 mas com gap em processo de prospecção ou ABM.
 - ❌ Não avança: score < 58, ou experiência majoritariamente SMB/inbound, ou ausência total de processo estruturado.`
+  },
+
+  'parcerias-sr': {
+    titulo: 'Parcerias & Alianças Estratégicas',
+    colecao: 'candidatos-parcerias-sr',
+    perguntas: [
+      "Me conta um parceiro estratégico que você trouxe do zero — do primeiro mapeamento até a parceria ativa. Como você identificou essa empresa, quem eram os decisores, como conduziu a negociação e qual foi o resultado?",
+      "Você já precisou montar uma proposta de valor para um parceiro sem ter área de marketing, produto ou jurídico do seu lado pra te apoiar? Como você resolveu e o que aconteceu?",
+      "Como você gerencia sua carteira de parceiros ativos? Me dá um exemplo real de como você identificou que um parceiro estava parado e o que fez pra reativar ou evoluir essa relação.",
+      "Me conta uma parceria que gerou resultado concreto — receita, leads qualificados ou base ativa. Como você chegou a essa parceria, o que estruturou e o que os números mostraram?"
+    ],
+    promptSistema: `Você é um recrutador sênior da Curseduca avaliando candidatos para a vaga de Parcerias & Alianças Estratégicas. Seu papel é ser criterioso — a maioria dos candidatos NÃO deve passar nessa triagem. Evite clustering de scores — distribua as notas com base no que cada candidato realmente demonstrou.
+
+Contexto da vaga: área de parcerias recente, time enxuto (Diretor + essa contratação). A pessoa vai co-construir o ecossistema do zero — não há playbook pronto, não há estrutura de suporte. O perfil precisa combinar hunter real, farmer ativo e visão de negócio. Experiência exclusiva em grandes corporações é eliminatória.
+
+CRITÉRIOS DE AVALIAÇÃO:
+
+1. Método de prospecção (hunter real): tem processo estruturado para mapear contas, identificar decisores e conduzir negociação até o fechamento. Sinal de sênior: descreve etapas concretas — como identificou o parceiro, quem eram os decisores, como avançou a negociação. Sinal de desalinhamento: "entrei em contato e foi evoluindo" sem processo, ou experiência só com parceiros que vieram inbound.
+
+2. Capacidade de construir do zero: já montou proposta de valor, processo ou estrutura de parcerias sem depender de área de suporte. Sinal de sênior: tem exemplo real de ter resolvido sozinho um problema que normalmente precisaria de marketing, produto ou jurídico. Sinal de desalinhamento: sempre dependeu de estrutura grande para avançar — nunca foi "a empresa menor precisando convencer".
+
+3. Gestão ativa de carteira (farmer): não só mantém relacionamento — identifica parceiros parados, cria planos de ativação e gera resultado da base existente. Sinal de sênior: descreve mecanismo concreto de acompanhamento e exemplo real de reativação ou expansão. Sinal de desalinhamento: "falava regularmente com os parceiros" sem critério de priorização ou resultado gerado.
+
+4. Visão de resultado de negócio: conecta parcerias com receita, leads qualificados ou base ativa — não fala só em relacionamento ou número de parceiros assinados. Sinal de sênior: cita resultado concreto — receita gerada, leads qualificados entregues, base ativa crescida. Sinal de desalinhamento: fala só em parceiros "fechados" ou "ativados" sem nenhum número ou resultado percebido.
+
+ESTE É O CRITÉRIO MAIS DISCRIMINANTE: método de prospecção (critério 1). Quem não consegue descrever como prospectou um parceiro do zero não tem o perfil hunter que a vaga exige.
+
+REGRAS CRÍTICAS — alertas que OBRIGATORIAMENTE reduzem o score:
+- Ausência de processo estruturado de prospecção (critério 1) = score máximo 60, mesmo que os outros critérios sejam fortes.
+- Experiência exclusiva em grandes corporações com estrutura pronta = score máximo 55, independente do restante.
+- Nenhum resultado concreto mencionado em nenhuma das respostas (nem número, nem resultado percebido) = score máximo 58.
+- Esses tetos se acumulam: se o candidato tiver dois fatores eliminatórios, o score deve refletir os dois.
+
+O QUE NÃO EXIGIR:
+- Não exija que o candidato cite receita exata gerada por parceria — aceite resultado percebido como válido: "trouxemos X leads qualificados", "a parceria gerou Y novos clientes", "a base ativa cresceu". Penalize apenas quem não mencionou nenhum resultado — nem qualitativo.
+- Não exija experiência em EdTech — é diferencial, não requisito.
+
+REGRAS DE FORMA (seja tolerante):
+- Transcrições automáticas têm erros de pontuação e palavras trocadas — ignore completamente. Avalie raciocínio e conteúdo.
+- Respostas longas são normais em áudio — NÃO penalize extensão. Só registre alerta se a resposta for completamente circular e vazia.
+- Se transcrição estiver '[transcrição não capturada]', não penalize — registre que o áudio precisa ser ouvido manualmente.
+
+CALIBRAÇÃO DE SCORE:
+Score 80+: processo de prospecção detalhado e próprio, resultado concreto em pelo menos 2 respostas, farmer com mecanismo real de acompanhamento, autonomia demonstrada na construção do zero. Muito raro.
+Score 65-79: processo de prospecção descrito com estrutura, resultado percebido presente, farmer com exemplo real, alguma autonomia demonstrada. Perfil claramente sênior.
+Score 50-64: tem experiência real em parcerias mas processo genérico, resultado ausente ou vago, farmer superficial.
+Score abaixo de 50: sem processo de prospecção, experiência só em account management ou relacionamento, sem nenhum resultado mencionado.
+A maioria cai entre 50 e 72. Reserve abaixo de 50 para quem claramente não tem perfil. Reserve acima de 75 para quem claramente se destacou.
+
+CLASSIFICAÇÃO:
+- ✅ Avança: score ≥ 70 E processo de prospecção demonstrado (critério 1) + pelo menos mais 2 critérios com substância real.
+- 🟡 Talvez: score entre 55-69, ou score ≥ 70 mas com gap em processo de prospecção ou ausência total de resultado concreto.
+- ❌ Não avança: score < 55, ou experiência exclusiva em grandes corporações, ou ausência total de processo de prospecção.`
   }
 }
 
@@ -281,7 +334,6 @@ function blobToBase64(blob) {
   })
 }
 
-// ─── NOVO: converte base64 data URL para blob URL para suporte a seek ────────
 function base64ToBlobUrl(base64DataUrl) {
   try {
     const [header, data] = base64DataUrl.split(',')
@@ -292,7 +344,7 @@ function base64ToBlobUrl(base64DataUrl) {
     const blob = new Blob([bytes], { type: mime })
     return URL.createObjectURL(blob)
   } catch {
-    return base64DataUrl // fallback para base64 se conversão falhar
+    return base64DataUrl
   }
 }
 
@@ -759,7 +811,6 @@ function Painel({ onVoltar, apiKey }) {
   const [reprovando, setReprovando] = useState(null)
   const [filtroReprovados, setFiltroReprovados] = useState("todos")
   const [audiosCarregados, setAudiosCarregados] = useState({})
-  // ─── NOVO: blob URLs separados para suporte a seek no player ────────────────
   const [blobUrls, setBlobUrls] = useState({})
   const [carregandoAudio, setCarregandoAudio] = useState(null)
   const [ordenacao, setOrdenacao] = useState('data-desc')
@@ -769,7 +820,6 @@ function Painel({ onVoltar, apiKey }) {
   const [analisandoFeedbacks, setAnalisandoFeedbacks] = useState(false)
   const [ultimoAcesso, setUltimoAcesso] = useState(null)
 
-  // ─── NOVO: cleanup de blob URLs ao desmontar o painel ───────────────────────
   useEffect(() => {
     return () => {
       setBlobUrls(prev => {
@@ -820,15 +870,11 @@ function Painel({ onVoltar, apiKey }) {
           if (parts.length === meta.totalChunks) a[p] = joinBase64(parts)
         }
       }
-
-      // ─── NOVO: converte base64 → blob URL para habilitar seek no player ─────
       const novosBlobUrls = {}
       for (const [pergIdx, base64] of Object.entries(a)) {
         novosBlobUrls[pergIdx] = base64ToBlobUrl(base64)
       }
       setBlobUrls(prev => ({ ...prev, [c.id]: novosBlobUrls }))
-      // ────────────────────────────────────────────────────────────────────────
-
       setAudiosCarregados(prev => ({ ...prev, [c.id]: a }))
     } catch { setAudiosCarregados(prev => ({ ...prev, [c.id]: {} })) }
     setCarregandoAudio(null)
@@ -889,7 +935,6 @@ function Painel({ onVoltar, apiKey }) {
       for (const ad of aSnap.docs) await deleteDoc(doc(db, c.colecao, c.id, "audios", ad.id))
       await deleteDoc(doc(db, c.colecao, c.id))
       setCandidatos(prev => prev.filter(x => x.id !== c.id))
-      // ─── NOVO: revogar blob URLs do candidato deletado ───────────────────────
       setBlobUrls(prev => {
         const urls = prev[c.id]
         if (urls) Object.values(urls).forEach(u => { try { URL.revokeObjectURL(u) } catch {} })
@@ -1002,7 +1047,7 @@ function Painel({ onVoltar, apiKey }) {
     btnRoxo: { background: '#ede9fe', color: '#7c3aed', border: 'none', borderRadius: '8px', padding: '8px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
     out: { background: 'white', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 20px', fontSize: '14px', cursor: 'pointer' },
     inp: { width: '100%', padding: '12px 16px', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '16px', boxSizing: 'border-box', outline: 'none', marginBottom: '16px' },
-    vagaBadge: (vaga) => ({ display: 'inline-block', background: vaga === 'csm-senior' ? '#ede9fe' : vaga === 'salesops' ? '#fef9c3' : vaga === 'copywriter-sr' ? '#fce7f3' : vaga === 'head-produto' ? '#dcfce7' : '#fff7ed', color: vaga === 'csm-senior' ? '#7c3aed' : vaga === 'salesops' ? '#92400e' : vaga === 'copywriter-sr' ? '#9d174d' : vaga === 'head-produto' ? '#15803d' : '#c2410c', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }),
+    vagaBadge: (vaga) => ({ display: 'inline-block', background: vaga === 'csm-senior' ? '#ede9fe' : vaga === 'salesops' ? '#fef9c3' : vaga === 'copywriter-sr' ? '#fce7f3' : vaga === 'head-produto' ? '#dcfce7' : vaga === 'parcerias-sr' ? '#ccfbf1' : '#fff7ed', color: vaga === 'csm-senior' ? '#7c3aed' : vaga === 'salesops' ? '#92400e' : vaga === 'copywriter-sr' ? '#9d174d' : vaga === 'head-produto' ? '#15803d' : vaga === 'parcerias-sr' ? '#0f766e' : '#c2410c', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '600' }),
     abaBotao: (ativa) => ({ background: ativa ? '#7c3aed' : 'white', color: ativa ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 20px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }),
     filtroBotao: (ativo) => ({ background: ativo ? '#7c3aed' : 'white', color: ativo ? 'white' : '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' })
   }
@@ -1067,6 +1112,7 @@ function Painel({ onVoltar, apiKey }) {
             ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
             ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
             ['ae-b2b', 'Account Executive B2B', '#fff7ed', '#c2410c'],
+            ['parcerias-sr', 'Parcerias & Alianças Estratégicas', '#ccfbf1', '#0f766e'],
           ].filter(([v]) => !vagasFechadas.includes(v)).map(([v, l, bg, cor]) => {
             const emTriagemV = candidatos.filter(x => x.vaga === v && (!x.etapa || x.etapa === 'triagem')).length
             const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
@@ -1100,6 +1146,7 @@ function Painel({ onVoltar, apiKey }) {
               ['copywriter-sr', 'Copywriter Sênior'],
               ['head-produto', 'Head de Produto'],
               ['ae-b2b', 'Account Executive B2B'],
+              ['parcerias-sr', 'Parcerias & Alianças Estratégicas'],
             ].filter(([v]) => vagasFechadas.includes(v)).map(([v, l]) => {
               const total = candidatos.filter(x => x.vaga === v).length
               const aprovadosV = candidatos.filter(x => x.vaga === v && x.etapa === 'aprovado').length
@@ -1149,6 +1196,7 @@ function Painel({ onVoltar, apiKey }) {
           ['copywriter-sr', 'Copywriter Sr.'],
           ['head-produto', 'Head de Produto'],
           ['ae-b2b', 'AE B2B'],
+          ['parcerias-sr', 'Parcerias Sr.'],
         ].filter(([v]) => !vagasFechadas.includes(v)).map(([v, l]) => {
           const novosNaVaga = candidatos.filter(x => x.vaga === v && isNovo(x)).length
           return (
@@ -1251,7 +1299,7 @@ function Painel({ onVoltar, apiKey }) {
                   <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>{f.nota}/5</span>
                   {f.conforto && <span style={{ background: '#ede9fe', color: '#7c3aed', borderRadius: '99px', padding: '2px 10px', fontSize: '12px', fontWeight: '600' }}>{f.conforto}</span>}
                   <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: 'auto' }}>
-                    {f.vaga === 'csm-senior' ? 'CSM Sênior' : f.vaga === 'salesops' ? 'Sales Ops' : f.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : f.vaga === 'head-produto' ? 'Head de Produto' : f.vaga === 'ae-b2b' ? 'AE B2B' : f.vaga} · {f.data}
+                    {f.vaga === 'csm-senior' ? 'CSM Sênior' : f.vaga === 'salesops' ? 'Sales Ops' : f.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : f.vaga === 'head-produto' ? 'Head de Produto' : f.vaga === 'ae-b2b' ? 'AE B2B' : f.vaga === 'parcerias-sr' ? 'Parcerias Sr.' : f.vaga} · {f.data}
                   </span>
                 </div>
                 {f.comentario && <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6', fontStyle: 'italic' }}>{f.comentario}</p>}
@@ -1273,6 +1321,7 @@ function Painel({ onVoltar, apiKey }) {
               ['copywriter-sr', 'Copywriter Sênior', '#fce7f3', '#9d174d'],
               ['head-produto', 'Head de Produto', '#dcfce7', '#15803d'],
               ['ae-b2b', 'Account Executive B2B', '#fff7ed', '#c2410c'],
+              ['parcerias-sr', 'Parcerias & Alianças Estratégicas', '#ccfbf1', '#0f766e'],
             ].map(([id, titulo, bg, cor]) => {
               const url = `${window.location.origin}/?vaga=${id}`
               return (
@@ -1299,7 +1348,6 @@ function Painel({ onVoltar, apiKey }) {
       {abaAtiva !== 'links' && abaAtiva !== 'feedback' && listaAtiva.map((x, i) => {
         const vc = VAGAS[x.vaga] || VAGAS['csm-senior']
         const aud = audiosCarregados[x.id] || {}
-        // ─── NOVO: blob URLs para este candidato (com suporte a seek) ───────────
         const candidatoBlobUrls = blobUrls[x.id] || {}
         const estaReavaliando = reavaliando === x.id
         const estaPassando = passando === x.id
@@ -1310,7 +1358,7 @@ function Painel({ onVoltar, apiKey }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: '16px' }}>{x.nome}</strong>
                 {isNovo(x) && <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626', flexShrink: 0 }} title="Novo" />}
-                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'csm-latam' ? 'CSM LATAM' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : x.vaga === 'head-produto' ? 'Head de Produto' : 'AE B2B'}</span>
+                <span style={sP.vagaBadge(x.vaga)}>{x.vaga === 'csm-senior' ? 'CSM Sênior' : x.vaga === 'csm-latam' ? 'CSM LATAM' : x.vaga === 'salesops' ? 'Sales Ops' : x.vaga === 'copywriter-sr' ? 'Copywriter Sr.' : x.vaga === 'head-produto' ? 'Head de Produto' : x.vaga === 'parcerias-sr' ? 'Parcerias Sr.' : 'AE B2B'}</span>
                 <span style={{ color: '#94a3b8', fontSize: '13px' }}>{x.data}</span>
                 {x.etapa === 'aprovado' && <span style={{ background: '#dcfce7', color: '#16a34a', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>✅ Aprovado {x.dataAprovacao ? `em ${x.dataAprovacao}` : ''}</span>}
                 {x.etapa === 'reprovado' && <span style={{ background: '#fee2e2', color: '#dc2626', borderRadius: '99px', padding: '2px 10px', fontSize: '11px', fontWeight: '700' }}>❌ {x.tipoReprovacao === 'pos-entrevista' ? 'Reprovado pós-entrevista' : 'Reprovado'} {x.dataReprovacao ? `em ${x.dataReprovacao}` : ''}</span>}
@@ -1387,7 +1435,6 @@ function Painel({ onVoltar, apiKey }) {
                 {x.respostas?.map((r, j) => (
                   <div key={j} style={{ marginTop: '12px', background: '#f8fafc', borderRadius: '8px', padding: '16px' }}>
                     <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>P{j + 1}: {vc.perguntas[j]}</p>
-                    {/* ─── NOVO: usa blob URL para seek; fallback para base64 se não disponível ── */}
                     {(candidatoBlobUrls[j] || aud[j])
                       ? <div onClick={e => e.stopPropagation()}>
                           <audio controls src={candidatoBlobUrls[j] || aud[j]} style={{ width: '100%', height: '36px' }} />
