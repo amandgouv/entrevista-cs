@@ -2,35 +2,27 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { db } from './firebase'
 import { collection, addDoc, getDocs, orderBy, query, doc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore'
 
-// Carrega ts-ebml via CDN uma vez e devolve o módulo
-let _ebmlPromise = null
-function loadEbml() {
-  if (_ebmlPromise) return _ebmlPromise
-  _ebmlPromise = new Promise((resolve, reject) => {
-    if (window.tsEbml) return resolve(window.tsEbml)
+// Corrige webm sem duração (problema do Chrome/MediaRecorder)
+// Usa fix-webm-duration via CDN
+let _fixerPromise = null
+function loadFixer() {
+  if (_fixerPromise) return _fixerPromise
+  _fixerPromise = new Promise((resolve, reject) => {
+    if (window.fixWebmDuration) return resolve(window.fixWebmDuration)
     const s = document.createElement('script')
-    s.src = 'https://cdn.jsdelivr.net/npm/ts-ebml@2.0.2/lib/index.js'
-    s.onload = () => resolve(window.tsEbml)
-    s.onerror = reject
+    s.src = 'https://cdn.jsdelivr.net/npm/fix-webm-duration@1.0.4/fix-webm-duration.js'
+    s.onload = () => resolve(window.fixWebmDuration)
+    s.onerror = () => resolve(null)
     document.head.appendChild(s)
   })
-  return _ebmlPromise
+  return _fixerPromise
 }
 
-// Recebe um Blob webm e devolve um novo Blob com seek/duração corretos
-async function fixWebmSeek(blob) {
+async function fixWebmSeek(blob, durationMs) {
   try {
-    const ebml = await loadEbml()
-    const ab = await blob.arrayBuffer()
-    const decoder = new ebml.Decoder()
-    const reader = new ebml.Reader()
-    reader.logging = false
-    const elems = decoder.decode(ab)
-    elems.forEach(e => reader.read(e))
-    reader.stop()
-    const refined = ebml.tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues)
-    const body = ab.slice(reader.metadataSize)
-    return new Blob([refined, body], { type: blob.type || 'audio/webm' })
+    const fix = await loadFixer()
+    if (!fix) return blob
+    return await new Promise(resolve => fix(blob, durationMs || 0, fixed => resolve(fixed || blob)))
   } catch {
     return blob
   }
@@ -370,9 +362,10 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
   const speechRef = useRef(null)
   const timerRef = useRef(null)
   const transcricaoRef = useRef("")
+  const duracaoGravacaoRef = useRef(0)
 
   const limparEstado = useCallback(() => { if (audioUrl) URL.revokeObjectURL(audioUrl); setAudioBlob(null); setAudioUrl(null); setTranscricao(""); setTempoRestante(TEMPO_LIMITE); transcricaoRef.current = "" }, [audioUrl])
-  const pararGravacao = useCallback(() => { setGravando(false); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }; if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') { try { mediaRecRef.current.stop() } catch {} }; if (speechRef.current) { try { speechRef.current.stop() } catch {}; speechRef.current = null } }, [])
+  const pararGravacao = useCallback((tempoAtual) => { duracaoGravacaoRef.current = tempoAtual !== undefined ? (TEMPO_LIMITE - tempoAtual) : duracaoGravacaoRef.current; setGravando(false); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }; if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') { try { mediaRecRef.current.stop() } catch {} }; if (speechRef.current) { try { speechRef.current.stop() } catch {}; speechRef.current = null } }, [])
 
   useEffect(() => { return () => { pararGravacao() } }, [pararGravacao])
   useEffect(() => { return () => { reviewUrls.forEach(u => { try { URL.revokeObjectURL(u) } catch {} }) } }, [reviewUrls])
@@ -385,7 +378,7 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
     const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : {})
     chunksRef.current = []
     mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
-    mr.onstop = () => { stream.getTracks().forEach(t => t.stop()); const blob = new Blob(chunksRef.current, { type: mime || 'audio/webm' }); setAudioBlob(blob); setAudioUrl(URL.createObjectURL(blob)); setTranscricao(transcricaoRef.current) }
+    mr.onstop = async () => { stream.getTracks().forEach(t => t.stop()); const rawBlob = new Blob(chunksRef.current, { type: mime || 'audio/webm' }); const durationMs = duracaoGravacaoRef.current * 1000; const blob = await fixWebmSeek(rawBlob, durationMs); setAudioBlob(blob); setAudioUrl(URL.createObjectURL(blob)); setTranscricao(transcricaoRef.current) }
     mediaRecRef.current = mr; mr.start(1000)
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (SR) {
@@ -396,7 +389,7 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       speechRef.current = sr; try { sr.start() } catch {}
     }
     setTempoRestante(TEMPO_LIMITE); setGravando(true)
-    timerRef.current = setInterval(() => { setTempoRestante(prev => { if (prev <= 1) { pararGravacao(); return 0 }; return prev - 1 }) }, 1000)
+    timerRef.current = setInterval(() => { setTempoRestante(prev => { if (prev <= 1) { pararGravacao(1); return 0 }; return prev - 1 }) }, 1000)
   }
 
   const salvarRespostaAtual = (blob, transcrAtual, tempoAtual, arr) => { const novas = [...arr]; novas[pergAtual] = { blob, transcricao: transcrAtual, duracao: TEMPO_LIMITE - tempoAtual }; return novas }
@@ -514,7 +507,7 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       <div style={S.row}>
         {!gravando && pergAtual > 0 && <button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569' }} onClick={voltar}>← Voltar</button>}
         {!gravando && !temAudio && <button style={{ ...S.btn, marginTop: 0, flex: 1 }} onClick={iniciarGravacao}>🎙 Gravar resposta</button>}
-        {gravando && <button style={{ ...S.btnSm, background: '#dc2626', color: 'white', flex: 1 }} onClick={pararGravacao}>⏹ Parar gravação</button>}
+        {gravando && <button style={{ ...S.btnSm, background: '#dc2626', color: 'white', flex: 1 }} onClick={() => pararGravacao(tempoRestante)}>⏹ Parar gravação</button>}
         {temAudio && !gravando && <><button style={{ ...S.btnSm, background: '#f1f5f9', color: '#475569' }} onClick={limparEstado}>🔄 Regravar</button><button style={{ ...S.btn, marginTop: 0, flex: 1 }} onClick={avancar}>{isUltima ? 'Revisar →' : 'Próxima →'}</button></>}
       </div>
     </div><style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}`}</style></div>
