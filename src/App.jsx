@@ -542,9 +542,10 @@ function Painel({ onVoltar, apiKey }) {
         if (b64) {
           a[p] = b64
           try {
-            const byteStr = atob(b64.split(',')[1] || b64); const arr = new Uint8Array(byteStr.length); for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i)
-            const blob = new Blob([arr], { type: 'audio/webm' }); urls[p] = URL.createObjectURL(blob)
-          } catch { urls[p] = b64 }
+            const dataUrl = b64.startsWith('data:') ? b64 : `data:audio/webm;base64,${b64}`
+            const res = await fetch(dataUrl); const blob = await res.blob()
+            urls[p] = URL.createObjectURL(blob)
+          } catch (err) { console.warn('blob fallback p' + p, err); urls[p] = null }
         }
       }
       setAudiosCarregados(prev => ({ ...prev, [c.id]: a }))
