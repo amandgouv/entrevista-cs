@@ -225,7 +225,16 @@ Contexto da vaga: modelo ABM (Account Based Marketing), ciclo de 60 a 180 dias, 
 
 Critérios de avaliação:
 1. Experiência em vendas B2B enterprise de verdade: ticket relevante, ciclo longo, múltiplos decisores (3+). Sinal de alinhamento: descreve contexto com precisão — quem eram os decisores, qual era o ticket, quanto durou. Sinal de desalinhamento: experiência majoritariamente SMB, inbound ou transacional.
-2. Processo estruturado de ABM e prospecção: tem método próprio de mapear contas, identificar decisores e construir relacionamento. Sinal de alinhamento: descreve etapas concretas de account mapping, como prioriza contas, como chega ao decisor certo. Sinal de desalinhamento: prospecção genérica ("mando e-mail e ligo"), sem critério de seleção de conta.
+2. Processo estruturado de ABM e prospecção: tem método próprio de selecionar e mapear contas antes de prospectar. ABM NÃO precisa ser mencionado pelo nome — reconheça ABM por comportamentos concretos:
+- Selecionou contas-alvo com critério (porte, setor, momento, potencial) antes de abordar
+- Mapeou stakeholders com nível de influência e poder de decisão — não apenas citou cargos
+- Descreveu abordagem personalizada por conta, não disparo genérico de e-mail/telefone
+- Construiu relacionamento com múltiplos decisores ao longo do ciclo
+
+ATENÇÃO — diferencie com rigor:
+- "Identifiquei que o decisor era o reitor e o coordenador" = citou cargos, NÃO é account mapping
+- "Mapeei quem tinha influência técnica vs. quem tinha poder de aprovação e abordei cada um de forma diferente" = account mapping real
+Quem apenas cita os decisores sem descrever como chegou até eles e como os abordou estrategicamente = alerta grave, não ponto forte.
 3. Resiliência e gestão de ciclo longo: consegue sustentar uma negociação complexa sem perder o fio — quando trava, tem estratégia. Sinal de alinhamento: descreve o que travou, por quê, e o que fez concretamente pra retomar. Sinal de desalinhamento: exemplo vago ou sem complexidade real.
 4. Comunicação orientada a valor de negócio: fala em impacto pro cliente — receita, risco, eficiência — não em features do produto.
 
