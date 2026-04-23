@@ -2,6 +2,42 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { db } from './firebase'
 import { collection, addDoc, getDocs, orderBy, query, doc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore'
 
+// Carrega ts-ebml via CDN uma vez e devolve o módulo
+let _ebmlPromise = null
+function loadEbml() {
+  if (_ebmlPromise) return _ebmlPromise
+  _ebmlPromise = new Promise((resolve, reject) => {
+    if (window.tsEbml) return resolve(window.tsEbml)
+    const s = document.createElement('script')
+    s.src = 'https://cdn.jsdelivr.net/npm/ts-ebml@2.0.2/lib/index.js'
+    s.onload = () => resolve(window.tsEbml)
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
+  return _ebmlPromise
+}
+
+// Recebe um Blob webm e devolve um novo Blob com seek/duração corretos
+async function fixWebmSeek(blob) {
+  try {
+    const ebml = await loadEbml()
+    const ab = await blob.arrayBuffer()
+    const decoder = new ebml.Decoder()
+    const reader = new ebml.Reader()
+    reader.logging = false
+    const elems = decoder.decode(ab)
+    elems.forEach(e => reader.read(e))
+    reader.stop()
+    const refined = ebml.tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues)
+    const body = ab.slice(reader.metadataSize)
+    return new Blob([refined, body], { type: blob.type || 'audio/webm' })
+  } catch {
+    return blob
+  }
+}
+
+
+
 const VAGAS = {
   'csm-senior': {
     titulo: 'Customer Success Manager Sênior',
@@ -543,8 +579,9 @@ function Painel({ onVoltar, apiKey }) {
           a[p] = b64
           try {
             const dataUrl = b64.startsWith('data:') ? b64 : `data:audio/webm;base64,${b64}`
-            const res = await fetch(dataUrl); const blob = await res.blob()
-            urls[p] = URL.createObjectURL(blob)
+            const res = await fetch(dataUrl); const rawBlob = await res.blob()
+            const fixedBlob = await fixWebmSeek(rawBlob)
+            urls[p] = URL.createObjectURL(fixedBlob)
           } catch (err) { console.warn('blob fallback p' + p, err); urls[p] = null }
         }
       }
