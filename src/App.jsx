@@ -436,7 +436,7 @@ function TelaCandidato({ apiKey, vagaId, onFinalizar }) {
       const errosAudio = []
       for (let i = 0; i < todas.length; i++) {
         try {
-          const b64 = await blobToBase64(todas[i].blob); const chunks = splitBase64(b64)
+          const fixedBlob = await fixWebmSeek(todas[i].blob); const b64 = await blobToBase64(fixedBlob); const chunks = splitBase64(b64)
           await setDoc(doc(db, config.colecao, docRef.id, "audios", `pergunta-${i}`), { pergunta: i, duracao: todas[i].duracao, totalChunks: chunks.length, ...(chunks.length === 1 ? { audioBase64: b64 } : {}) })
           if (chunks.length > 1) { for (let c = 0; c < chunks.length; c++) { await setDoc(doc(db, config.colecao, docRef.id, "audios", `pergunta-${i}-chunk-${c}`), { pergunta: i, chunk: c, data: chunks[c] }) } }
         } catch { errosAudio.push(i + 1) }
