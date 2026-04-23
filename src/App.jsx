@@ -500,6 +500,7 @@ function Painel({ onVoltar, apiKey }) {
   const [passando, setPassando] = useState(null)
   const [reprovando, setReprovando] = useState(null)
   const [audiosCarregados, setAudiosCarregados] = useState({})
+  const [blobUrls, setBlobUrls] = useState({})
   const [carregandoAudio, setCarregandoAudio] = useState(null)
   const [ordenacao, setOrdenacao] = useState('data-desc')
   const [feedbacks, setFeedbacks] = useState([])
@@ -531,10 +532,23 @@ function Painel({ onVoltar, apiKey }) {
   const carregarAudios = async (c) => {
     if (audiosCarregados[c.id]) return; setCarregandoAudio(c.id)
     try {
-      const snap = await getDocs(collection(db, c.colecao, c.id, "audios")); const docs = {}; snap.docs.forEach(d => { docs[d.id] = d.data() }); const a = {}
+      const snap = await getDocs(collection(db, c.colecao, c.id, "audios")); const docs = {}; snap.docs.forEach(d => { docs[d.id] = d.data() }); const a = {}; const urls = {}
       const perguntas = new Set(Object.values(docs).map(d => d.pergunta).filter(p => p !== undefined))
-      for (const p of perguntas) { const meta = docs[`pergunta-${p}`]; if (!meta) continue; if (meta.audioBase64) { a[p] = meta.audioBase64 } else if (meta.totalChunks > 1) { const parts = []; for (let c2 = 0; c2 < meta.totalChunks; c2++) { const chunkDoc = docs[`pergunta-${p}-chunk-${c2}`]; if (chunkDoc) parts.push(chunkDoc.data) }; if (parts.length === meta.totalChunks) a[p] = joinBase64(parts) } }
+      for (const p of perguntas) {
+        const meta = docs[`pergunta-${p}`]; if (!meta) continue
+        let b64 = null
+        if (meta.audioBase64) { b64 = meta.audioBase64 }
+        else if (meta.totalChunks > 1) { const parts = []; for (let c2 = 0; c2 < meta.totalChunks; c2++) { const chunkDoc = docs[`pergunta-${p}-chunk-${c2}`]; if (chunkDoc) parts.push(chunkDoc.data) }; if (parts.length === meta.totalChunks) b64 = joinBase64(parts) }
+        if (b64) {
+          a[p] = b64
+          try {
+            const byteStr = atob(b64.split(',')[1] || b64); const arr = new Uint8Array(byteStr.length); for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i)
+            const blob = new Blob([arr], { type: 'audio/webm' }); urls[p] = URL.createObjectURL(blob)
+          } catch { urls[p] = b64 }
+        }
+      }
       setAudiosCarregados(prev => ({ ...prev, [c.id]: a }))
+      setBlobUrls(prev => ({ ...prev, [c.id]: urls }))
     } catch { setAudiosCarregados(prev => ({ ...prev, [c.id]: {} })) }
     setCarregandoAudio(null)
   }
@@ -543,7 +557,7 @@ function Painel({ onVoltar, apiKey }) {
   const passarProximaEtapa = async (c, e) => { e.stopPropagation(); if (!confirm(`Passar ${c.nome} para a próxima etapa?`)) return; setPassando(c.id); try { await updateDoc(doc(db, c.colecao, c.id), { etapa: 'aprovado', dataAprovacao: new Date().toLocaleDateString("pt-BR") }); setCandidatos(prev => prev.map(x => x.id === c.id ? { ...x, etapa: 'aprovado', dataAprovacao: new Date().toLocaleDateString("pt-BR") } : x)); setExp(null) } catch (err) { alert("Erro: " + err.message) }; setPassando(null) }
   const reprovar = async (c, e) => { e.stopPropagation(); if (!confirm(`Reprovar ${c.nome}?`)) return; setReprovando(c.id); try { await updateDoc(doc(db, c.colecao, c.id), { etapa: 'reprovado', dataReprovacao: new Date().toLocaleDateString("pt-BR") }); setCandidatos(prev => prev.map(x => x.id === c.id ? { ...x, etapa: 'reprovado', dataReprovacao: new Date().toLocaleDateString("pt-BR") } : x)); setExp(null) } catch (err) { alert("Erro: " + err.message) }; setReprovando(null) }
   const voltarParaTriagem = async (c, e) => { e.stopPropagation(); try { await updateDoc(doc(db, c.colecao, c.id), { etapa: 'triagem' }); setCandidatos(prev => prev.map(x => x.id === c.id ? { ...x, etapa: 'triagem' } : x)); setExp(null) } catch (err) { alert("Erro: " + err.message) } }
-  const deletar = async (c, e) => { e.stopPropagation(); if (!confirm(`Apagar ${c.nome}?`)) return; try { const aSnap = await getDocs(collection(db, c.colecao, c.id, "audios")); for (const ad of aSnap.docs) await deleteDoc(doc(db, c.colecao, c.id, "audios", ad.id)); await deleteDoc(doc(db, c.colecao, c.id)); setCandidatos(prev => prev.filter(x => x.id !== c.id)); setAudiosCarregados(prev => { const n = { ...prev }; delete n[c.id]; return n }) } catch (e) { alert("Erro: " + e.message) } }
+  const deletar = async (c, e) => { e.stopPropagation(); if (!confirm(`Apagar ${c.nome}?`)) return; try { const aSnap = await getDocs(collection(db, c.colecao, c.id, "audios")); for (const ad of aSnap.docs) await deleteDoc(doc(db, c.colecao, c.id, "audios", ad.id)); await deleteDoc(doc(db, c.colecao, c.id)); setCandidatos(prev => prev.filter(x => x.id !== c.id)); setAudiosCarregados(prev => { const n = { ...prev }; delete n[c.id]; return n }); setBlobUrls(prev => { const n = { ...prev }; if (n[c.id]) { Object.values(n[c.id]).forEach(u => { try { URL.revokeObjectURL(u) } catch {} }) }; delete n[c.id]; return n }) } catch (e) { alert("Erro: " + e.message) } }
   const carregarFeedbacks = async () => { setCarregandoFeedbacks(true); try { const q = query(collection(db, 'feedback-entrevistas'), orderBy('timestamp', 'desc')); const snap = await getDocs(q); setFeedbacks(snap.docs.map(d => ({ id: d.id, ...d.data() }))) } catch (e) { console.error(e) }; setCarregandoFeedbacks(false) }
 
   useEffect(() => { if (auth) { const chave = 'painel_ultimo_acesso'; const anterior = localStorage.getItem(chave); setUltimoAcesso(anterior ? new Date(anterior) : null); localStorage.setItem(chave, new Date().toISOString()); carregarCandidatos() } }, [auth])
@@ -654,7 +668,6 @@ function Painel({ onVoltar, apiKey }) {
       {abaAtiva !== 'links' && abaAtiva !== 'feedback' && listaAtiva.length === 0 && <div style={{ background: 'white', borderRadius: '12px', padding: '40px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', color: '#64748b' }}>{abaAtiva === 'aprovados' ? 'Nenhum candidato aprovado ainda.' : abaAtiva === 'reprovados' ? 'Nenhum candidato reprovado.' : 'Nenhum candidato nessa categoria.'}</div>}
       {abaAtiva !== 'links' && abaAtiva !== 'feedback' && listaAtiva.map((x, i) => {
         const vc = VAGAS[x.vaga] || VAGAS['csm-senior']
-        const aud = audiosCarregados[x.id] || {}
         const estaReavaliando = reavaliando === x.id
         const estaPassando = passando === x.id
         return (
@@ -686,14 +699,29 @@ function Painel({ onVoltar, apiKey }) {
                 {x.avaliacao?.alertas?.length > 0 && <div style={{ marginBottom: '16px' }}><strong style={{ fontSize: '13px', color: '#dc2626' }}>⚠️ Alertas</strong><ul style={{ margin: '8px 0 0', paddingLeft: '20px' }}>{x.avaliacao.alertas.map((a, j) => <li key={j} style={{ fontSize: '13px', color: '#475569' }}>{a}</li>)}</ul></div>}
                 <strong style={{ fontSize: '13px', color: '#475569' }}>Respostas</strong>
                 {carregandoAudio === x.id && <p style={{ fontSize: '13px', color: '#7c3aed', marginTop: '8px' }}>Carregando áudios...</p>}
-                {x.respostas?.map((r, j) => (
-                  <div key={j} style={{ marginTop: '12px', background: '#f8fafc', borderRadius: '8px', padding: '16px' }}>
-                    <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>P{j + 1}: {vc.perguntas[j]}</p>
-                    {aud[j] ? <div onClick={e => e.stopPropagation()}><audio controls src={aud[j]} style={{ width: '100%', height: '36px' }} /></div> : x.errosAudio?.includes(j + 1) ? <p style={{ fontSize: '12px', color: '#dc2626', margin: 0 }}>⚠️ Áudio não salvo</p> : carregandoAudio !== x.id ? <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>Áudio não disponível</p> : null}
-                    {r.duracao != null && <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#7c3aed' }}>⏱ {formatarTempo(r.duracao)}</p>}
-                    {r.transcricao && <details onClick={e => e.stopPropagation()} style={{ marginTop: '8px' }}><summary style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>Ver transcrição</summary><p style={{ margin: '6px 0 0', fontSize: '13px', color: '#1e293b', lineHeight: '1.5' }}>{r.transcricao}</p></details>}
-                  </div>
-                ))}
+                {x.respostas?.map((r, j) => {
+                  const blobUrl = blobUrls[x.id]?.[j]; const audFallback = (audiosCarregados[x.id] || {})[j]; const srcAudio = blobUrl || audFallback || null
+                  const audioKey = `${x.id}-${j}`
+                  return (
+                    <div key={j} style={{ marginTop: '12px', background: '#f8fafc', borderRadius: '8px', padding: '16px' }}>
+                      <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>P{j + 1}: {vc.perguntas[j]}</p>
+                      {srcAudio ? (
+                        <div onClick={e => e.stopPropagation()}>
+                          <audio id={audioKey} controls src={srcAudio} style={{ width: '100%', height: '36px' }} />
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '6px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '11px', color: '#94a3b8', marginRight: '2px' }}>velocidade:</span>
+                            {[1, 1.5, 2, 2.5].map(v => (
+                              <button key={v} onClick={e => { e.stopPropagation(); const el = document.getElementById(audioKey); if (el) el.playbackRate = v; e.currentTarget.parentNode.querySelectorAll('button').forEach(b => b.style.background = '#f1f5f9'); e.currentTarget.style.background = '#ede9fe' }}
+                                style={{ border: 'none', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', background: v === 1 ? '#ede9fe' : '#f1f5f9', color: '#475569' }}>{v}x</button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : x.errosAudio?.includes(j + 1) ? <p style={{ fontSize: '12px', color: '#dc2626', margin: 0 }}>⚠️ Áudio não salvo</p> : carregandoAudio !== x.id ? <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>Áudio não disponível</p> : null}
+                      {r.duracao != null && <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#7c3aed' }}>⏱ {formatarTempo(r.duracao)}</p>}
+                      {r.transcricao && <details onClick={e => e.stopPropagation()} style={{ marginTop: '8px' }}><summary style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>Ver transcrição</summary><p style={{ margin: '6px 0 0', fontSize: '13px', color: '#1e293b', lineHeight: '1.5' }}>{r.transcricao}</p></details>}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
