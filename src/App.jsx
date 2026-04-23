@@ -559,7 +559,7 @@ function Painel({ onVoltar, apiKey }) {
   }
 
   const carregarAudios = async (c) => {
-    if (audiosCarregados[c.id]) return; setCarregandoAudio(c.id)
+    if (audiosCarregados[c.id] && blobUrls[c.id]) return; setCarregandoAudio(c.id)
     try {
       const snap = await getDocs(collection(db, c.colecao, c.id, "audios")); const docs = {}; snap.docs.forEach(d => { docs[d.id] = d.data() }); const a = {}; const urls = {}
       const perguntas = new Set(Object.values(docs).map(d => d.pergunta).filter(p => p !== undefined))
